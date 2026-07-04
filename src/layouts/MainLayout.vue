@@ -4,15 +4,30 @@
       <q-toolbar class="app-titlebar">
         <q-toolbar-title class="app-brand">GitWitan</q-toolbar-title>
 
-        <q-btn flat dense no-caps icon="folder_open" label="Open" class="app-action" />
-        <q-btn flat dense no-caps icon="download" label="Clone" class="app-action" />
-        <q-btn flat dense no-caps icon="add" label="Init" class="app-action" />
-      </q-toolbar>
+        <div class="repo-management-actions" aria-label="Repository management">
+          <q-btn flat dense no-caps icon="folder_open" label="Open" class="repo-management-action" />
+          <q-btn flat dense no-caps icon="download" label="Clone" class="repo-management-action" />
+          <q-btn flat dense no-caps icon="add" label="Init" class="repo-management-action" />
+        </div>
 
-      <q-tabs align="left" dense class="repo-tabs" active-class="repo-tab-active">
-        <q-route-tab to="/" name="welcome" icon="home" label="No repository" />
-        <q-btn flat dense round icon="add" aria-label="Open repository" class="repo-add" />
-      </q-tabs>
+        <section class="current-repo-card" aria-label="Current repository status">
+          <div class="current-repo-copy">
+            <div class="current-repo-name">No repository</div>
+            <div class="current-repo-state">Up to date</div>
+          </div>
+          <div class="current-repo-progress" aria-hidden="true">
+            <div class="current-repo-progress-bar" />
+          </div>
+        </section>
+
+        <div class="app-command-bar" aria-label="Active repository commands">
+          <q-btn flat no-caps icon="sync" label="Fetch" class="app-command" />
+          <q-btn flat no-caps icon="south" label="Pull" class="app-command" />
+          <q-btn flat no-caps icon="north" label="Push" class="app-command" />
+          <q-btn flat no-caps icon="call_merge" label="Merge" class="app-command" />
+          <q-btn flat no-caps icon="inventory_2" label="Stash" class="app-command" />
+        </div>
+      </q-toolbar>
     </q-header>
 
     <q-page-container>

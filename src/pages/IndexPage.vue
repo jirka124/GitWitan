@@ -1,55 +1,131 @@
 <template>
   <q-page class="repository-workspace">
-    <section class="repo-toolbar">
-      <q-btn flat dense no-caps icon="sync" label="Fetch" />
-      <q-btn flat dense no-caps icon="south" label="Pull" />
-      <q-btn flat dense no-caps icon="north" label="Push" />
-      <q-separator vertical />
-      <q-btn flat dense no-caps icon="call_merge" label="Merge" />
-      <q-btn flat dense no-caps icon="inventory_2" label="Stash" />
-      <q-space />
-      <q-btn flat dense round icon="search" aria-label="Search" />
-      <q-btn flat dense round icon="settings" aria-label="Settings" />
+    <section class="repo-switcher" aria-label="Open repositories">
+      <button class="repo-switcher-item repo-switcher-item-active" type="button">
+        <span>No repository</span>
+      </button>
+      <button class="repo-switcher-item" type="button">
+        <span>GitWitan</span>
+      </button>
+      <button class="repo-switcher-add" type="button" aria-label="Open repository">
+        <q-icon name="add" />
+      </button>
     </section>
 
     <main class="repo-grid">
       <aside class="repo-sidebar">
-        <q-list dense padding>
-          <q-item-label header>Branches</q-item-label>
-          <q-item clickable active>
+        <div class="repo-sidebar-header">
+          <div class="repo-name">No repository</div>
+        </div>
+
+        <q-list dense padding class="repo-navigation">
+          <q-item clickable :active="activeView === 'history'" @click="activeView = 'history'">
             <q-item-section avatar>
-              <q-icon name="account_tree" />
+              <q-icon name="history" />
             </q-item-section>
-            <q-item-section>main</q-item-section>
+            <q-item-section>History</q-item-section>
           </q-item>
 
-          <q-item-label header>Remotes</q-item-label>
-          <q-item clickable>
+          <q-item clickable :active="activeView === 'changes'" @click="activeView = 'changes'">
             <q-item-section avatar>
-              <q-icon name="cloud" />
+              <q-icon name="difference" />
             </q-item-section>
-            <q-item-section>origin</q-item-section>
+            <q-item-section>Local Changes</q-item-section>
           </q-item>
+        </q-list>
 
-          <q-item-label header>Stashes</q-item-label>
-          <q-item>
-            <q-item-section class="muted">No stashes</q-item-section>
-          </q-item>
+        <q-separator />
+
+        <q-list dense class="repo-tree">
+          <q-expansion-item dense default-opened expand-icon="keyboard_arrow_right" label="Branches">
+            <q-item clickable class="repo-tree-item repo-tree-item-current">
+              <q-item-section avatar>
+                <q-icon name="account_tree" />
+              </q-item-section>
+              <q-item-section>main</q-item-section>
+            </q-item>
+            <q-item clickable class="repo-tree-item">
+              <q-item-section avatar>
+                <q-icon name="account_tree" />
+              </q-item-section>
+              <q-item-section>feature/sidebar-polish</q-item-section>
+            </q-item>
+            <q-item clickable class="repo-tree-item">
+              <q-item-section avatar>
+                <q-icon name="account_tree" />
+              </q-item-section>
+              <q-item-section>release/mvp-shell</q-item-section>
+            </q-item>
+          </q-expansion-item>
+
+          <q-expansion-item dense default-opened expand-icon="keyboard_arrow_right" label="Remotes">
+            <q-expansion-item dense default-opened class="repo-tree-nested" expand-icon="keyboard_arrow_right" label="origin">
+              <q-item clickable class="repo-tree-item repo-tree-child">
+                <q-item-section avatar>
+                  <q-icon name="commit" />
+                </q-item-section>
+                <q-item-section>origin/main</q-item-section>
+              </q-item>
+              <q-item clickable class="repo-tree-item repo-tree-child">
+                <q-item-section avatar>
+                  <q-icon name="commit" />
+                </q-item-section>
+                <q-item-section>origin/develop</q-item-section>
+              </q-item>
+              <q-item clickable class="repo-tree-item repo-tree-child">
+                <q-item-section avatar>
+                  <q-icon name="commit" />
+                </q-item-section>
+                <q-item-section>origin/feature/git-service</q-item-section>
+              </q-item>
+            </q-expansion-item>
+
+            <q-expansion-item dense class="repo-tree-nested" expand-icon="keyboard_arrow_right" label="upstream">
+              <q-item clickable class="repo-tree-item repo-tree-child">
+                <q-item-section avatar>
+                  <q-icon name="commit" />
+                </q-item-section>
+                <q-item-section>upstream/main</q-item-section>
+              </q-item>
+              <q-item clickable class="repo-tree-item repo-tree-child">
+                <q-item-section avatar>
+                  <q-icon name="commit" />
+                </q-item-section>
+                <q-item-section>upstream/preview</q-item-section>
+              </q-item>
+            </q-expansion-item>
+          </q-expansion-item>
+
+          <q-expansion-item dense default-opened expand-icon="keyboard_arrow_right" label="Stashes">
+            <q-item clickable class="repo-tree-item">
+              <q-item-section avatar>
+                <q-icon name="inventory_2" />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>WIP: sidebar density pass</q-item-label>
+                <q-item-label caption>stash@{0}</q-item-label>
+              </q-item-section>
+            </q-item>
+            <q-item clickable class="repo-tree-item">
+              <q-item-section avatar>
+                <q-icon name="inventory_2" />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>Before toolbar layout changes</q-item-label>
+                <q-item-label caption>stash@{1}</q-item-label>
+              </q-item-section>
+            </q-item>
+          </q-expansion-item>
         </q-list>
       </aside>
 
       <section class="repo-main">
-        <q-tabs v-model="activeView" dense align="left" class="view-tabs">
-          <q-tab name="history" icon="history" label="History" />
-          <q-tab name="changes" icon="difference" label="Local Changes" />
-        </q-tabs>
-
         <q-tab-panels v-model="activeView" animated class="view-panels">
           <q-tab-panel name="history" class="work-panel">
             <div class="empty-state">
               <q-icon name="commit" size="32px" />
               <h1>Open a repository to inspect history</h1>
-              <p>Commit lists, changed files, and diffs will live here.</p>
+              <p>Commit lists and graph controls will live here.</p>
             </div>
           </q-tab-panel>
 
@@ -61,12 +137,12 @@
             </div>
           </q-tab-panel>
         </q-tab-panels>
-      </section>
 
-      <aside class="repo-detail">
-        <div class="panel-title">Details</div>
-        <div class="empty-detail">Select a commit or file to view its diff.</div>
-      </aside>
+        <section class="repo-detail">
+          <div class="panel-title">Details</div>
+          <div class="empty-detail">Select a commit or file to view its diff.</div>
+        </section>
+      </section>
     </main>
   </q-page>
 </template>
