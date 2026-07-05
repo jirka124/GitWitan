@@ -114,6 +114,8 @@ body {
 .repo-management-actions,
 .current-repo-card,
 .app-command-bar,
+.app-command-group,
+.app-settings-trigger,
 .repo-switcher,
 .q-btn,
 button,
@@ -128,31 +130,32 @@ select {
   display: flex;
   flex: 0 0 auto;
   align-items: center;
-  gap: 2px;
+  justify-content: center;
+  width: 48px;
   padding-right: 10px;
   border-right: 1px solid var(--app-border);
 }
 
-.repo-management-action {
-  min-height: 34px;
-  padding: 3px 7px;
+.repo-management-trigger,
+.app-settings-trigger {
+  width: 38px;
+  height: 38px;
+  min-height: 38px;
   color: var(--app-text-muted);
+  border: 1px solid transparent;
   border-radius: var(--app-radius);
 }
 
-.repo-management-action .q-icon {
-  font-size: 18px;
+.repo-management-trigger .q-icon,
+.app-settings-trigger .q-icon {
+  font-size: 22px;
 }
 
-.repo-management-action .q-btn__content {
-  gap: 4px;
-  font-size: 11px;
-  font-weight: 600;
-}
-
-.repo-management-action:hover {
+.repo-management-trigger:hover,
+.app-settings-trigger:hover {
   color: var(--app-text);
   background: var(--app-surface-raised);
+  border-color: var(--app-border-strong);
 }
 
 .current-repo-card {
@@ -223,21 +226,33 @@ select {
   align-items: center;
   justify-content: flex-end;
   margin-left: auto;
-  gap: 4px;
+  gap: 8px;
   min-width: 0;
   overflow: hidden;
 }
 
-.app-command {
-  min-height: 46px;
-  padding: 5px 11px;
-  color: var(--app-text);
+.app-command-group {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  padding: 3px;
+  background: rgb(255 255 255 / 2.5%);
+  border: 1px solid rgb(255 255 255 / 5%);
   border-radius: var(--app-radius);
+}
+
+.app-command {
+  min-height: 36px;
+  padding: 4px 9px;
+  color: var(--app-text);
+  border-radius: 4px;
 }
 
 .app-command .q-icon {
   color: var(--app-accent);
-  font-size: 23px;
+  font-size: 20px;
 }
 
 .app-command .q-btn__content {
@@ -248,6 +263,22 @@ select {
 
 .app-command:hover {
   background: var(--app-surface-raised);
+}
+.app-command-bar > .app-settings-trigger {
+  margin-left: 2px;
+  background: rgb(255 255 255 / 2%);
+  border-color: rgb(255 255 255 / 5%);
+}
+
+.app-branch-command {
+  min-width: 104px;
+  justify-content: flex-start;
+}
+
+.app-command-caret {
+  margin-left: 2px;
+  color: var(--app-text-muted) !important;
+  font-size: 18px !important;
 }
 
 .repository-workspace {
@@ -521,8 +552,7 @@ select {
     padding-left: 8px;
   }
 
-  .app-command .q-btn__content span.block,
-  .repo-management-action .q-btn__content span.block {
+  .app-command .q-btn__content span.block {
     display: none;
   }
 }
