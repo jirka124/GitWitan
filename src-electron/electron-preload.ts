@@ -22,10 +22,18 @@
  * https://www.electronjs.org/docs/latest/tutorial/tutorial-preload
  */
 
-import { contextBridge } from "electron";
-import { quasarRuntime } from "#q-app/electron/preload";
+import { contextBridge, ipcRenderer } from 'electron';
+import { quasarRuntime } from '#q-app/electron/preload';
+
+type WindowTheme = 'dark' | 'light';
 
 /**
  * Can be used in the renderer process through `window.quasarRuntime`
  */
-contextBridge.exposeInMainWorld("quasarRuntime", quasarRuntime);
+contextBridge.exposeInMainWorld('quasarRuntime', quasarRuntime);
+
+contextBridge.exposeInMainWorld('gitwitanWindow', {
+  setTheme: (theme: WindowTheme) => {
+    ipcRenderer.send('gitwitan:set-window-theme', theme);
+  },
+});

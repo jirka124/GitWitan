@@ -1,10 +1,40 @@
-import { BrowserWindow, app, type BrowserWindowConstructorOptions } from 'electron';
+import { BrowserWindow, app, ipcMain, type BrowserWindowConstructorOptions } from 'electron';
 import path from 'node:path';
 import os from 'node:os';
 import { registerQuasarRuntime, resolveElectronAssetsPath } from '#q-app/electron/main';
 
 // needed in case process is undefined under Linux
 const platform = process.platform || os.platform();
+
+const TITLE_BAR_HEIGHT = 30;
+const WINDOW_THEMES = {
+  dark: {
+    backgroundColor: '#151719',
+    titleBarColor: '#1d2024',
+    symbolColor: '#eef1f4',
+  },
+  light: {
+    backgroundColor: '#edf0f3',
+    titleBarColor: '#ffffff',
+    symbolColor: '#1f252b',
+  },
+} as const;
+
+type WindowTheme = keyof typeof WINDOW_THEMES;
+
+function applyWindowTheme(window: BrowserWindow, theme: WindowTheme) {
+  const colors = WINDOW_THEMES[theme];
+
+  window.setBackgroundColor(colors.backgroundColor);
+
+  if (platform !== 'darwin') {
+    window.setTitleBarOverlay({
+      color: colors.titleBarColor,
+      symbolColor: colors.symbolColor,
+      height: TITLE_BAR_HEIGHT,
+    });
+  }
+}
 
 function getTitleBarOptions(): Pick<
   BrowserWindowConstructorOptions,
@@ -20,9 +50,9 @@ function getTitleBarOptions(): Pick<
   return {
     titleBarStyle: 'hidden',
     titleBarOverlay: {
-      color: '#1d2024',
-      symbolColor: '#eef1f4',
-      height: 30,
+      color: WINDOW_THEMES.dark.titleBarColor,
+      symbolColor: WINDOW_THEMES.dark.symbolColor,
+      height: TITLE_BAR_HEIGHT,
     },
   };
 }
@@ -38,7 +68,7 @@ async function createWindow() {
     minWidth: 920,
     minHeight: 560,
     useContentSize: true,
-    backgroundColor: '#151719',
+    backgroundColor: WINDOW_THEMES.dark.backgroundColor,
     ...getTitleBarOptions(),
     webPreferences: {
       contextIsolation: true,
@@ -46,6 +76,8 @@ async function createWindow() {
       preload: path.join(import.meta.dirname, 'electron-preload.cjs'),
     },
   });
+
+  applyWindowTheme(mainWindow, 'dark');
 
   if (import.meta.env.QUASAR_DEV) {
     await mainWindow.loadURL(import.meta.env.QUASAR_APP_URL);
@@ -61,6 +93,13 @@ async function createWindow() {
   }
 }
 
+ipcMain.on('gitwitan:set-window-theme', (event, theme: WindowTheme) => {
+  const window = BrowserWindow.fromWebContents(event.sender);
+
+  if (window) {
+    applyWindowTheme(window, theme);
+  }
+});
 void app.whenReady().then(async () => {
   await registerQuasarRuntime();
 

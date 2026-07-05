@@ -1,13 +1,32 @@
 :root {
+  color-scheme: dark;
   --app-bg: #151719;
   --app-surface: #1d2024;
   --app-surface-raised: #24282d;
+  --app-surface-deep: #171a1e;
+  --app-surface-subtle: #20252a;
   --app-border: #343a40;
   --app-border-strong: #4a525c;
   --app-text: #eef1f4;
   --app-text-muted: #a8b0ba;
+  --app-title-muted: #88919c;
+  --app-icon-muted: #7f8994;
+  --app-caption: #78828d;
+  --app-folder: #737d88;
+  --app-folder-text: #89929d;
+  --app-nested-text: #9aa3ad;
+  --app-control-bg: #171a1e;
+  --app-hover: rgb(255 255 255 / 6%);
+  --app-hover-soft: rgb(255 255 255 / 4%);
+  --app-titlebar-border: rgb(255 255 255 / 3%);
+  --app-command-group-bg: rgb(255 255 255 / 2.5%);
+  --app-command-group-border: rgb(255 255 255 / 5%);
+  --app-settings-bg: rgb(255 255 255 / 2%);
+  --app-progress-track: rgb(255 255 255 / 8%);
+  --app-inset-highlight: rgb(255 255 255 / 4%);
   --app-accent: #4fb7a6;
   --app-danger: #e06c75;
+  --app-status-warning: #d8b45f;
   --app-radius: 6px;
   --app-window-controls-width: 148px;
   --app-titlebar-height: 30px;
@@ -15,6 +34,37 @@
   --app-header-height: calc(var(--app-titlebar-height) + var(--app-workbar-height));
   --repo-switcher-height: 34px;
   --app-panel-padding: 12px;
+}
+
+body.body--light {
+  color-scheme: light;
+  --app-bg: #edf0f3;
+  --app-surface: #ffffff;
+  --app-surface-raised: #f3f6f8;
+  --app-surface-deep: #f7f9fb;
+  --app-surface-subtle: #f8fafb;
+  --app-border: #d6dce2;
+  --app-border-strong: #bcc6d0;
+  --app-text: #1f252b;
+  --app-text-muted: #5d6772;
+  --app-title-muted: #687480;
+  --app-icon-muted: #6f7b87;
+  --app-caption: #6d7782;
+  --app-folder: #63707c;
+  --app-folder-text: #4e5b67;
+  --app-nested-text: #4f5b66;
+  --app-control-bg: #ffffff;
+  --app-hover: rgb(31 37 43 / 7%);
+  --app-hover-soft: rgb(31 37 43 / 5%);
+  --app-titlebar-border: rgb(31 37 43 / 7%);
+  --app-command-group-bg: rgb(31 37 43 / 3.5%);
+  --app-command-group-border: rgb(31 37 43 / 8%);
+  --app-settings-bg: rgb(31 37 43 / 3%);
+  --app-progress-track: rgb(31 37 43 / 10%);
+  --app-inset-highlight: rgb(255 255 255 / 75%);
+  --app-accent: #147d70;
+  --app-danger: #b94854;
+  --app-status-warning: #b58118;
 }
 
 * {
@@ -60,7 +110,7 @@ body {
   width: 100%;
   padding: 7px 10px 8px;
   gap: 12px;
-  border-top: 1px solid rgb(255 255 255 / 3%);
+  border-top: 1px solid var(--app-titlebar-border);
 }
 
 .app-menu-bar {
@@ -86,7 +136,7 @@ body {
 
 .app-menu-item:hover {
   color: var(--app-text);
-  background: rgb(255 255 255 / 6%);
+  background: var(--app-hover);
 }
 
 .app-window-title {
@@ -96,7 +146,7 @@ body {
   max-width: 180px;
   height: var(--app-titlebar-height);
   overflow: hidden;
-  color: #88919c;
+  color: var(--app-title-muted);
   font-size: 11px;
   font-weight: 650;
   line-height: var(--app-titlebar-height);
@@ -116,6 +166,7 @@ body {
 .app-command-bar,
 .app-command-group,
 .app-settings-trigger,
+.app-theme-trigger,
 .repo-switcher,
 .q-btn,
 button,
@@ -137,6 +188,7 @@ select {
 }
 
 .repo-management-trigger,
+.app-theme-trigger,
 .app-settings-trigger {
   width: 38px;
   height: 38px;
@@ -147,11 +199,13 @@ select {
 }
 
 .repo-management-trigger .q-icon,
+.app-theme-trigger .q-icon,
 .app-settings-trigger .q-icon {
   font-size: 22px;
 }
 
 .repo-management-trigger:hover,
+.app-theme-trigger:hover,
 .app-settings-trigger:hover {
   color: var(--app-text);
   background: var(--app-surface-raised);
@@ -169,10 +223,10 @@ select {
   min-height: 46px;
   padding: 7px 12px 8px;
   overflow: hidden;
-  background: #20252a;
+  background: var(--app-surface-subtle);
   border: 1px solid var(--app-border-strong);
   border-radius: var(--app-radius);
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 4%);
+  box-shadow: inset 0 1px 0 var(--app-inset-highlight);
 }
 
 .current-repo-copy {
@@ -208,7 +262,7 @@ select {
   left: 10px;
   height: 2px;
   overflow: hidden;
-  background: rgb(255 255 255 / 8%);
+  background: var(--app-progress-track);
   border-radius: 999px;
 }
 
@@ -238,8 +292,8 @@ select {
   gap: 2px;
   min-width: 0;
   padding: 3px;
-  background: rgb(255 255 255 / 2.5%);
-  border: 1px solid rgb(255 255 255 / 5%);
+  background: var(--app-command-group-bg);
+  border: 1px solid var(--app-command-group-border);
   border-radius: var(--app-radius);
 }
 
@@ -264,10 +318,11 @@ select {
 .app-command:hover {
   background: var(--app-surface-raised);
 }
+.app-command-bar > .app-theme-trigger,
 .app-command-bar > .app-settings-trigger {
   margin-left: 2px;
-  background: rgb(255 255 255 / 2%);
-  border-color: rgb(255 255 255 / 5%);
+  background: var(--app-settings-bg);
+  border-color: var(--app-command-group-border);
 }
 
 .app-branch-command {
@@ -299,7 +354,7 @@ select {
   padding: 0 8px;
   overflow-x: auto;
   overflow-y: hidden;
-  background: #191c20;
+  background: var(--app-surface-deep);
   border-bottom: 1px solid var(--app-border);
 }
 
@@ -397,7 +452,7 @@ select {
 }
 
 .repo-sidebar .q-icon {
-  color: #7f8994;
+  color: var(--app-icon-muted);
   font-size: 15px;
 }
 
@@ -422,7 +477,7 @@ select {
 }
 
 .repo-tree .q-expansion-item__toggle-icon {
-  color: #7f8994;
+  color: var(--app-icon-muted);
   font-size: 16px;
   transform: rotate(0deg);
 }
@@ -442,7 +497,7 @@ select {
 }
 
 .repo-tree-item .q-item__label--caption {
-  color: #78828d;
+  color: var(--app-caption);
   font-size: 11px;
 }
 
@@ -456,7 +511,7 @@ select {
 
 .repo-tree-nested > .q-expansion-item__container > .q-item {
   padding-left: 18px;
-  color: #9aa3ad;
+  color: var(--app-nested-text);
   font-size: 12px;
   font-weight: 650;
   text-transform: none;
@@ -468,7 +523,7 @@ select {
 
 .repo-tree .q-item:hover {
   color: var(--app-text);
-  background: rgb(255 255 255 / 4%);
+  background: var(--app-hover-soft);
 }
 .repo-detail {
   min-height: 0;
@@ -493,7 +548,7 @@ select {
 .commit-input .q-field__control {
   min-height: 30px;
   color: var(--app-text);
-  background: #171a1e;
+  background: var(--app-surface-deep);
 }
 
 .commit-input .q-field__native,
@@ -504,7 +559,7 @@ select {
 
 .commit-input .q-field__native::placeholder,
 .commit-input .q-field__input::placeholder {
-  color: #7f8994;
+  color: var(--app-icon-muted);
   opacity: 1;
 }
 
@@ -567,7 +622,7 @@ select {
   min-width: 0;
   min-height: 0;
   overflow: hidden;
-  background: #171a1e;
+  background: var(--app-surface-deep);
 }
 
 .repo-view-layout {
@@ -713,11 +768,11 @@ select {
 }
 
 .changes-file-tree .q-tree__node-header:hover {
-  background: rgb(255 255 255 / 4%);
+  background: var(--app-hover-soft);
 }
 
 .changes-file-tree .q-tree__arrow {
-  color: #7f8994;
+  color: var(--app-icon-muted);
   font-size: 13px;
 }
 
@@ -734,18 +789,18 @@ select {
 }
 
 .changes-tree-folder {
-  color: #737d88;
+  color: var(--app-folder);
   font-weight: 600;
 }
 
 .changes-tree-icon {
   flex: 0 0 auto;
-  color: #7f8994;
+  color: var(--app-icon-muted);
   font-size: 12px;
 }
 
 .changes-tree-folder-icon {
-  color: #737d88;
+  color: var(--app-folder);
 }
 
 .changes-tree-copy {
@@ -763,7 +818,7 @@ select {
 }
 
 .changes-tree-folder .changes-tree-label {
-  color: #89929d;
+  color: var(--app-folder-text);
   font-size: 10px;
   font-weight: 650;
   text-transform: none;
@@ -801,7 +856,7 @@ select {
 }
 
 .change-status-modified {
-  background: #d8b45f;
+  background: var(--app-status-warning);
 }
 
 .change-status-added,
@@ -815,7 +870,7 @@ select {
   min-width: 0;
   min-height: 0;
   overflow: hidden;
-  background: #171a1e;
+  background: var(--app-surface-deep);
 }
 
 .changes-preview-empty {
