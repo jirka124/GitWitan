@@ -2,10 +2,27 @@
   <q-layout view="hHh LpR fFf" class="app-shell">
     <q-header class="app-header">
       <q-toolbar class="app-titlebar">
-        <q-toolbar-title class="app-brand">GitWitan</q-toolbar-title>
+        <nav class="app-menu-bar" aria-label="Application menu">
+          <button class="app-menu-item" type="button">File</button>
+          <button class="app-menu-item" type="button">View</button>
+          <button class="app-menu-item" type="button">Repository</button>
+          <button class="app-menu-item" type="button">Window</button>
+          <button class="app-menu-item" type="button">Help</button>
+        </nav>
 
+        <div class="app-window-title" aria-hidden="true">GitWitan</div>
+      </q-toolbar>
+
+      <q-toolbar class="app-workbar">
         <div class="repo-management-actions" aria-label="Repository management">
-          <q-btn flat dense no-caps icon="folder_open" label="Open" class="repo-management-action" />
+          <q-btn
+            flat
+            dense
+            no-caps
+            icon="folder_open"
+            label="Open"
+            class="repo-management-action"
+          />
           <q-btn flat dense no-caps icon="download" label="Clone" class="repo-management-action" />
           <q-btn flat dense no-caps icon="add" label="Init" class="repo-management-action" />
         </div>

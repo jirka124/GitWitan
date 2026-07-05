@@ -9,7 +9,10 @@
   --app-accent: #4fb7a6;
   --app-danger: #e06c75;
   --app-radius: 6px;
-  --app-titlebar-height: 66px;
+  --app-window-controls-width: 148px;
+  --app-titlebar-height: 30px;
+  --app-workbar-height: 62px;
+  --app-header-height: calc(var(--app-titlebar-height) + var(--app-workbar-height));
   --repo-switcher-height: 34px;
   --app-panel-padding: 12px;
 }
@@ -44,19 +47,83 @@ body {
 }
 
 .app-titlebar {
+  position: relative;
+  display: flex;
   min-height: var(--app-titlebar-height);
-  padding: 8px 10px;
+  padding: 0 var(--app-window-controls-width) 0 6px;
+  -webkit-app-region: drag;
+  app-region: drag;
+}
+
+.app-workbar {
+  min-height: var(--app-workbar-height);
+  width: 100%;
+  padding: 7px 10px 8px;
   gap: 12px;
+  border-top: 1px solid rgb(255 255 255 / 3%);
 }
 
-.app-brand {
-  flex: 0 0 auto;
-  max-width: 120px;
+.app-menu-bar {
+  display: flex;
+  flex: 0 1 auto;
+  align-items: center;
+  min-width: 0;
+  height: var(--app-titlebar-height);
+  overflow: hidden;
+}
+
+.app-menu-item {
+  height: 24px;
+  padding: 0 9px;
+  color: var(--app-text-muted);
+  font: inherit;
+  font-size: 12px;
+  line-height: 24px;
+  background: transparent;
+  border: 0;
+  border-radius: 4px;
+}
+
+.app-menu-item:hover {
   color: var(--app-text);
-  font-size: 15px;
-  font-weight: 800;
+  background: rgb(255 255 255 / 6%);
 }
 
+.app-window-title {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  max-width: 180px;
+  height: var(--app-titlebar-height);
+  overflow: hidden;
+  color: #88919c;
+  font-size: 11px;
+  font-weight: 650;
+  line-height: var(--app-titlebar-height);
+  text-align: center;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.app-menu-bar,
+.app-menu-item,
+.app-workbar,
+.repo-management-actions,
+.current-repo-card,
+.app-command-bar,
+.repo-switcher,
+.q-btn,
+button,
+a,
+input,
+textarea,
+select {
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+}
 .repo-management-actions {
   display: flex;
   flex: 0 0 auto;
@@ -91,13 +158,13 @@ body {
 .current-repo-card {
   position: relative;
   display: flex;
-  flex: 1 1 280px;
+  flex: 1 1 auto;
   flex-direction: column;
   justify-content: center;
-  max-width: 420px;
-  min-width: 180px;
-  min-height: 48px;
-  padding: 8px 12px 9px;
+  max-width: none;
+  min-width: 220px;
+  min-height: 46px;
+  padding: 7px 12px 8px;
   overflow: hidden;
   background: #20252a;
   border: 1px solid var(--app-border-strong);
@@ -152,17 +219,18 @@ body {
 
 .app-command-bar {
   display: flex;
-  flex: 0 1 auto;
+  flex: 0 0 auto;
   align-items: center;
   justify-content: flex-end;
+  margin-left: auto;
   gap: 4px;
   min-width: 0;
   overflow: hidden;
 }
 
 .app-command {
-  min-height: 48px;
-  padding: 5px 10px;
+  min-height: 46px;
+  padding: 5px 11px;
   color: var(--app-text);
   border-radius: var(--app-radius);
 }
@@ -185,7 +253,7 @@ body {
 .repository-workspace {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - var(--app-titlebar-height));
+  height: calc(100vh - var(--app-header-height));
   min-height: 0;
   overflow: hidden;
   background: var(--app-bg);
@@ -328,7 +396,11 @@ body {
   transform: rotate(0deg);
 }
 
-.repo-tree .q-expansion-item--expanded > .q-expansion-item__container > .q-item .q-expansion-item__toggle-icon {
+.repo-tree
+  .q-expansion-item--expanded
+  > .q-expansion-item__container
+  > .q-item
+  .q-expansion-item__toggle-icon {
   transform: rotate(90deg);
 }
 
@@ -456,13 +528,25 @@ body {
 }
 
 @media (max-width: 760px) {
+  :root {
+    --app-window-controls-width: 126px;
+  }
+
   .app-titlebar {
+    padding-right: var(--app-window-controls-width);
+  }
+
+  .app-workbar {
     gap: 8px;
   }
 
-  .app-brand {
-    max-width: 34px;
-    overflow: hidden;
+  .app-menu-item {
+    padding-right: 7px;
+    padding-left: 7px;
+  }
+
+  .app-window-title {
+    display: none;
   }
 
   .repo-management-actions {
@@ -489,4 +573,3 @@ body {
     grid-template-rows: minmax(0, 1fr) minmax(160px, 32vh);
   }
 }
-
