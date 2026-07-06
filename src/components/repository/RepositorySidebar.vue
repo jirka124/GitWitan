@@ -139,8 +139,8 @@ defineEmits<{
 
 <style scoped>
 .repository-sidebar {
-  min-width: 0;
-  min-height: 0;
+  width: 100%;
+  height: 100%;
   overflow: auto;
   background: var(--app-surface);
   border-right: 0;

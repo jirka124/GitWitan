@@ -27,6 +27,8 @@
   --app-accent: #4fb7a6;
   --app-danger: #e06c75;
   --app-status-warning: #d8b45f;
+  --app-scroll-thumb: rgb(168 176 186 / 35%);
+  --app-scroll-thumb-hover: rgb(168 176 186 / 55%);
   --app-radius: 6px;
   --app-window-controls-width: 148px;
   --app-titlebar-height: 30px;
@@ -65,6 +67,8 @@ body.body--light {
   --app-accent: #147d70;
   --app-danger: #b94854;
   --app-status-warning: #b58118;
+  --app-scroll-thumb: rgb(93 103 114 / 32%);
+  --app-scroll-thumb-hover: rgb(93 103 114 / 52%);
 }
 
 * {
@@ -110,6 +114,29 @@ select {
 .not-found {
   background: var(--app-bg);
   color: var(--app-text);
+}
+
+* {
+  scrollbar-color: var(--app-scroll-thumb) transparent;
+  scrollbar-width: thin;
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--app-scroll-thumb);
+  border-radius: 6px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--app-scroll-thumb-hover);
 }
 
 @media (max-width: 760px) {

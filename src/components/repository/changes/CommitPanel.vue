@@ -112,6 +112,10 @@ const amendCommit = defineModel<boolean>('amend', { required: true });
   font-weight: 650;
 }
 
+.commit-amend :deep(.q-checkbox__inner--truthy) {
+  color: var(--app-accent);
+}
+
 .commit-amend {
   flex: 0 0 auto;
   color: var(--app-text-muted);
