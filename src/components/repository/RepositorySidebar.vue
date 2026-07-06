@@ -31,52 +31,91 @@
     <q-separator />
 
     <q-list dense class="repository-tree">
-      <q-expansion-item dense default-opened expand-icon="keyboard_arrow_right" label="Branches">
+      <q-expansion-item
+        dense
+        default-opened
+        icon="account_tree"
+        expand-icon="keyboard_arrow_right"
+        label="Branches"
+        caption="3 local"
+        class="repository-tree-section repository-tree-section-branches"
+      >
         <q-item clickable class="repository-tree-item repository-tree-item-current">
           <q-item-section avatar>
             <q-icon name="account_tree" />
           </q-item-section>
-          <q-item-section>main</q-item-section>
+          <q-item-section>
+            <q-item-label>main</q-item-label>
+            <q-item-label caption>current branch</q-item-label>
+          </q-item-section>
+          <q-item-section side>
+            <span class="repository-tree-pill">current</span>
+          </q-item-section>
         </q-item>
         <q-item clickable class="repository-tree-item">
           <q-item-section avatar>
             <q-icon name="account_tree" />
           </q-item-section>
-          <q-item-section>feature/sidebar-polish</q-item-section>
+          <q-item-section>
+            <q-item-label>feature/sidebar-polish</q-item-label>
+            <q-item-label caption>local branch</q-item-label>
+          </q-item-section>
         </q-item>
         <q-item clickable class="repository-tree-item">
           <q-item-section avatar>
             <q-icon name="account_tree" />
           </q-item-section>
-          <q-item-section>release/mvp-shell</q-item-section>
+          <q-item-section>
+            <q-item-label>release/mvp-shell</q-item-label>
+            <q-item-label caption>local branch</q-item-label>
+          </q-item-section>
         </q-item>
       </q-expansion-item>
 
-      <q-expansion-item dense default-opened expand-icon="keyboard_arrow_right" label="Remotes">
+      <q-expansion-item
+        dense
+        default-opened
+        icon="cloud_queue"
+        expand-icon="keyboard_arrow_right"
+        label="Remotes"
+        caption="2 sources"
+        class="repository-tree-section repository-tree-section-remotes"
+      >
         <q-expansion-item
           dense
           default-opened
           class="repository-tree-nested"
           expand-icon="keyboard_arrow_right"
+          icon="dns"
           label="origin"
+          caption="3 branches"
         >
           <q-item clickable class="repository-tree-item repository-tree-child">
             <q-item-section avatar>
               <q-icon name="commit" />
             </q-item-section>
-            <q-item-section>origin/main</q-item-section>
+            <q-item-section>
+              <q-item-label>main</q-item-label>
+              <q-item-label caption>origin/main</q-item-label>
+            </q-item-section>
           </q-item>
           <q-item clickable class="repository-tree-item repository-tree-child">
             <q-item-section avatar>
               <q-icon name="commit" />
             </q-item-section>
-            <q-item-section>origin/develop</q-item-section>
+            <q-item-section>
+              <q-item-label>develop</q-item-label>
+              <q-item-label caption>origin/develop</q-item-label>
+            </q-item-section>
           </q-item>
           <q-item clickable class="repository-tree-item repository-tree-child">
             <q-item-section avatar>
               <q-icon name="commit" />
             </q-item-section>
-            <q-item-section>origin/feature/git-service</q-item-section>
+            <q-item-section>
+              <q-item-label>feature/git-service</q-item-label>
+              <q-item-label caption>origin/feature/git-service</q-item-label>
+            </q-item-section>
           </q-item>
         </q-expansion-item>
 
@@ -84,25 +123,41 @@
           dense
           class="repository-tree-nested"
           expand-icon="keyboard_arrow_right"
+          icon="dns"
           label="upstream"
+          caption="2 branches"
         >
           <q-item clickable class="repository-tree-item repository-tree-child">
             <q-item-section avatar>
               <q-icon name="commit" />
             </q-item-section>
-            <q-item-section>upstream/main</q-item-section>
+            <q-item-section>
+              <q-item-label>main</q-item-label>
+              <q-item-label caption>upstream/main</q-item-label>
+            </q-item-section>
           </q-item>
           <q-item clickable class="repository-tree-item repository-tree-child">
             <q-item-section avatar>
               <q-icon name="commit" />
             </q-item-section>
-            <q-item-section>upstream/preview</q-item-section>
+            <q-item-section>
+              <q-item-label>preview</q-item-label>
+              <q-item-label caption>upstream/preview</q-item-label>
+            </q-item-section>
           </q-item>
         </q-expansion-item>
       </q-expansion-item>
 
-      <q-expansion-item dense default-opened expand-icon="keyboard_arrow_right" label="Stashes">
-        <q-item clickable class="repository-tree-item">
+      <q-expansion-item
+        dense
+        default-opened
+        icon="inventory_2"
+        expand-icon="keyboard_arrow_right"
+        label="Stashes"
+        caption="2 saved states"
+        class="repository-tree-section repository-tree-section-stashes"
+      >
+        <q-item clickable class="repository-tree-item repository-tree-stash">
           <q-item-section avatar>
             <q-icon name="inventory_2" />
           </q-item-section>
@@ -111,7 +166,7 @@
             <q-item-label caption>stash@{0}</q-item-label>
           </q-item-section>
         </q-item>
-        <q-item clickable class="repository-tree-item">
+        <q-item clickable class="repository-tree-item repository-tree-stash">
           <q-item-section avatar>
             <q-icon name="inventory_2" />
           </q-item-section>
@@ -189,21 +244,61 @@ defineEmits<{
 }
 
 .repository-tree {
-  padding: 6px 0 10px;
+  padding: 8px 6px 12px;
 }
 
-.repository-tree :deep(.q-expansion-item__container > .q-item) {
-  min-height: 28px;
-  padding: 2px 10px;
-  color: var(--app-text-muted);
+.repository-tree-section {
+  margin-bottom: 6px;
+  overflow: hidden;
+  border: 1px solid transparent;
+  border-radius: var(--app-radius);
+}
+
+.repository-tree-section :deep(> .q-expansion-item__container > .q-item) {
+  min-height: 36px;
+  padding: 5px 8px;
+  color: var(--app-text);
+  background: var(--app-hover-soft);
+  border-radius: var(--app-radius);
+}
+
+.repository-tree-section :deep(> .q-expansion-item__container > .q-item .q-item__label) {
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 800;
+  letter-spacing: 0;
   text-transform: uppercase;
 }
 
-.repository-tree :deep(.q-expansion-item__toggle-icon) {
-  color: var(--app-icon-muted);
+.repository-tree-section :deep(> .q-expansion-item__container > .q-item .q-item__label--caption) {
+  color: var(--app-caption);
+  font-size: 10px;
+  font-weight: 650;
+  text-transform: none;
+}
+
+.repository-tree-section :deep(> .q-expansion-item__container > .q-item .q-icon) {
+  color: var(--app-accent);
   font-size: 16px;
+}
+
+.repository-tree-section :deep(.q-expansion-item__content) {
+  position: relative;
+  padding: 0;
+}
+
+.repository-tree-section :deep(.q-expansion-item__content::before) {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 18px;
+  width: 1px;
+  content: '';
+  background: var(--app-border);
+}
+
+.repository-tree :deep(.q-expansion-item__toggle-icon) {
+  color: var(--app-icon-muted) !important;
+  font-size: 16px !important;
   transform: rotate(0deg);
 }
 
@@ -218,39 +313,106 @@ defineEmits<{
 }
 
 .repository-tree-item {
-  min-height: 28px;
-  padding-left: 16px;
+  min-height: 30px;
+  margin-top: 2px;
+  padding-left: 20px;
+  padding-right: 8px;
+  border-radius: 4px;
   font-size: 12px;
+}
+
+.repository-tree-item :deep(.q-item__label) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .repository-tree-item :deep(.q-item__label--caption) {
   color: var(--app-caption);
-  font-size: 11px;
+  font-size: 10px;
+  line-height: 1.2;
 }
 
 .repository-tree-item-current {
   color: var(--app-text);
+  background: color-mix(in srgb, var(--app-accent) 14%, transparent);
 }
 
 .repository-tree-item-current :deep(.q-icon) {
   color: var(--app-accent);
 }
 
+.repository-tree-pill {
+  display: inline-flex;
+  align-items: center;
+  height: 17px;
+  padding: 0 6px;
+  color: var(--app-accent);
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1;
+  text-transform: uppercase;
+  background: color-mix(in srgb, var(--app-accent) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--app-accent) 28%, transparent);
+  border-radius: 999px;
+}
+
+.repository-tree-nested {
+  margin: 2px 0;
+}
+
 .repository-tree-nested :deep(> .q-expansion-item__container > .q-item) {
-  padding-left: 18px;
+  min-height: 32px;
+  padding: 4px 8px 4px 20px;
   color: var(--app-nested-text);
+  background: transparent;
+  border-radius: 4px;
+}
+
+.repository-tree-nested :deep(> .q-expansion-item__container > .q-item .q-item__label) {
   font-size: 12px;
-  font-weight: 650;
+  font-weight: 750;
   text-transform: none;
 }
 
+.repository-tree-nested :deep(> .q-expansion-item__container > .q-item .q-item__label--caption) {
+  color: var(--app-caption);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.repository-tree-nested :deep(> .q-expansion-item__container > .q-item .q-icon) {
+  color: var(--app-folder);
+}
+
 .repository-tree-child {
-  padding-left: 34px;
+  padding-left: 36px;
+}
+
+.repository-tree-stash {
+  min-height: 34px;
 }
 
 .repository-tree :deep(.q-item:hover) {
   color: var(--app-text);
   background: var(--app-hover-soft);
+}
+
+.repository-tree-section-branches {
+  border-color: color-mix(in srgb, var(--app-accent) 12%, transparent);
+}
+
+.repository-tree-section-remotes {
+  border-color: color-mix(in srgb, var(--app-folder) 14%, transparent);
+}
+
+.repository-tree-section-stashes {
+  border-color: color-mix(in srgb, var(--app-status-warning) 14%, transparent);
+}
+
+.repository-tree-section-stashes :deep(> .q-expansion-item__container > .q-item .q-icon),
+.repository-tree-stash :deep(.q-icon) {
+  color: var(--app-status-warning);
 }
 
 @media (max-width: 760px) {
