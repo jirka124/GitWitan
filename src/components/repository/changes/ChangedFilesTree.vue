@@ -13,7 +13,9 @@
         :class="{
           'changed-files-tree-folder': prop.node.children,
           'changed-files-tree-file': !prop.node.children,
+          'changed-files-tree-file-active': activeKey === prop.node.key,
         }"
+        @click="handleRowClick(prop.node)"
       >
         <q-icon
           :name="prop.node.icon"
@@ -30,11 +32,19 @@
         <div class="changed-files-tree-copy">
           <div class="changed-files-tree-label">
             <span class="changed-files-tree-label-short">{{ prop.node.label }}</span>
-            <span v-if="prop.node.caption" class="changed-files-tree-label-full">
-              {{ prop.node.caption }}
-            </span>
           </div>
         </div>
+        <q-btn
+          dense
+          flat
+          round
+          :icon="actionIcon"
+          :aria-label="`${actionLabel} ${prop.node.label}`"
+          class="changed-files-row-action"
+          @click.stop="emitAction(prop.node)"
+        >
+          <q-tooltip>{{ actionLabel }}</q-tooltip>
+        </q-btn>
       </div>
     </template>
   </q-tree>
@@ -45,7 +55,27 @@ import type { ChangeTreeNode } from '../../../types/repository';
 
 defineProps<{
   nodes: ChangeTreeNode[];
+  activeKey?: string | undefined;
+  actionIcon: string;
+  actionLabel: string;
 }>();
+
+const emit = defineEmits<{
+  'select-file': [node: ChangeTreeNode];
+  action: [node: ChangeTreeNode];
+}>();
+
+const handleRowClick = (node: ChangeTreeNode) => {
+  if (node.children?.length) {
+    return;
+  }
+
+  emit('select-file', node);
+};
+
+const emitAction = (node: ChangeTreeNode) => {
+  emit('action', node);
+};
 </script>
 
 <style scoped>
@@ -90,10 +120,27 @@ defineProps<{
   font-weight: 650;
 }
 
+.changed-files-tree-file {
+  cursor: default;
+}
+
+.changed-files-tree-file-active {
+  color: var(--app-text);
+}
+
+.changed-files-tree :deep(.q-tree__node-header:has(.changed-files-tree-file-active)) {
+  background: color-mix(in srgb, var(--app-accent) 15%, transparent);
+  box-shadow: inset 2px 0 0 var(--app-accent);
+}
+
 .changed-files-tree-icon {
   flex: 0 0 auto;
   color: var(--app-icon-muted);
   font-size: 13px;
+}
+
+.changed-files-tree-file-active .changed-files-tree-icon {
+  color: var(--app-accent);
 }
 
 .changed-files-tree-folder-icon {
@@ -122,30 +169,35 @@ defineProps<{
   text-transform: none;
 }
 
-.changed-files-tree-label-full {
-  display: none;
-}
-
-.changed-files-tree
-  :deep(.q-tree__node-header:hover)
-  .changed-files-tree-file
-  .changed-files-tree-label-short {
-  display: none;
-}
-
-.changed-files-tree
-  :deep(.q-tree__node-header:hover)
-  .changed-files-tree-file
-  .changed-files-tree-label-full {
-  display: inline;
-}
-
-.changed-files-tree-folder .changed-files-tree-label-full {
-  display: none;
-}
-
 .changed-files-tree-folder .changed-files-tree-label-short {
   display: inline;
+}
+
+.changed-files-row-action {
+  flex: 0 0 20px;
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  min-height: 20px;
+  padding: 0;
+  color: var(--app-icon-muted);
+  background: transparent;
+  border-radius: 50%;
+  opacity: 0;
+}
+
+.changed-files-tree-row:hover .changed-files-row-action,
+.changed-files-row-action:focus-visible {
+  opacity: 1;
+}
+
+.changed-files-row-action :deep(.q-focus-helper) {
+  border-radius: 50%;
+}
+
+.changed-files-row-action :deep(.q-icon) {
+  color: var(--app-accent);
+  font-size: 17px;
 }
 
 .changed-files-status {

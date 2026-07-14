@@ -12,25 +12,31 @@
         <ChangedFilesPanel
           title="Unstaged"
           :count-label="`${unstagedFileCount} files changed`"
-          action-icon="add"
+          action-icon="add_circle_outline"
           action-label="Stage"
           panel-label="Unstaged files"
           :nodes="unstagedTree"
+          :active-key="activeChange?.area === 'unstaged' ? activeChange.node.key : undefined"
+          @select-file="selectChange('unstaged', $event)"
+          @action-node="requestChangeAction('stage', $event)"
         />
 
         <ChangedFilesPanel
           title="Staged"
           :count-label="`${stagedFileCount} files ready`"
-          action-icon="remove"
+          action-icon="remove_circle_outline"
           action-label="Unstage"
           panel-label="Staged files"
           :nodes="stagedTree"
+          :active-key="activeChange?.area === 'staged' ? activeChange.node.key : undefined"
+          @select-file="selectChange('staged', $event)"
+          @action-node="requestChangeAction('unstage', $event)"
         />
       </section>
     </template>
 
     <template #after>
-      <DiffPreviewPanel />
+      <DiffPreviewPanel :active-change="activeChange" />
     </template>
   </q-splitter>
 
@@ -50,6 +56,14 @@ import ChangedFilesPanel from './ChangedFilesPanel.vue';
 import CommitPanel from './CommitPanel.vue';
 import DiffPreviewPanel from './DiffPreviewPanel.vue';
 
+type ChangeArea = 'unstaged' | 'staged';
+type ChangeAction = 'stage' | 'unstage';
+
+type ActiveChange = {
+  area: ChangeArea;
+  node: ChangeTreeNode;
+};
+
 defineProps<{
   unstagedTree: ChangeTreeNode[];
   stagedTree: ChangeTreeNode[];
@@ -63,6 +77,7 @@ const changesPreviewSplitter = ref(200);
 const commitSubject = ref('');
 const commitDescription = ref('');
 const amendCommit = ref(false);
+const activeChange = ref<ActiveChange>();
 
 const changesPreviewSplitterLimits = computed<[number, number]>(() => [
   200,
@@ -71,6 +86,16 @@ const changesPreviewSplitterLimits = computed<[number, number]>(() => [
 
 const onResize = (size: { width: number; height: number }) => {
   changesViewBox.value = size;
+};
+
+const selectChange = (area: ChangeArea, node: ChangeTreeNode) => {
+  activeChange.value = { area, node };
+};
+
+const requestChangeAction = (action: ChangeAction, node: ChangeTreeNode) => {
+  if (!node.children?.length) {
+    activeChange.value = { area: action === 'stage' ? 'unstaged' : 'staged', node };
+  }
 };
 </script>
 
