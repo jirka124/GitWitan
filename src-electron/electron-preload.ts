@@ -37,3 +37,7 @@ contextBridge.exposeInMainWorld('gitwitanWindow', {
     ipcRenderer.send('gitwitan:set-window-theme', theme);
   },
 });
+
+contextBridge.exposeInMainWorld('gitwitanShell', {
+  openExternal: (url: string) => ipcRenderer.invoke('gitwitan:open-external-url', url),
+});

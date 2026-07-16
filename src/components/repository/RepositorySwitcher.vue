@@ -1,16 +1,50 @@
 <template>
   <section class="repository-switcher" aria-label="Open repositories">
-    <button class="repository-switcher-item repository-switcher-item-active" type="button">
+    <button
+      class="repository-switcher-item"
+      :class="{ 'repository-switcher-item-active': isRepositoryManagementRoute }"
+      type="button"
+      @click="openRepositoryManagement"
+    >
       <span>No repository</span>
     </button>
-    <button class="repository-switcher-item" type="button">
+    <button
+      class="repository-switcher-item"
+      :class="{ 'repository-switcher-item-active': isRepositoryRoute }"
+      type="button"
+      @click="openRepository"
+    >
       <span>GitWitan</span>
     </button>
-    <button class="repository-switcher-add" type="button" aria-label="Open repository">
+    <button
+      class="repository-switcher-add"
+      type="button"
+      aria-label="Add or manage repositories"
+      @click="openRepositoryManagement"
+    >
       <q-icon name="add" />
     </button>
   </section>
 </template>
+
+<script setup lang="ts">
+import { computed } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+
+const route = useRoute();
+const router = useRouter();
+
+const isRepositoryManagementRoute = computed(() => route.path === '/');
+const isRepositoryRoute = computed(() => route.path === '/repository');
+
+const openRepositoryManagement = () => {
+  void router.push('/');
+};
+
+const openRepository = () => {
+  void router.push('/repository');
+};
+</script>
 
 <style scoped>
 .repository-switcher {

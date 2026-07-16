@@ -6,10 +6,13 @@
         dense
         round
         icon="folder_open"
-        aria-label="Repository actions"
+        aria-label="Repository management"
+        :aria-pressed="isRepositoryManagementRoute"
         class="repo-management-trigger"
+        :class="{ 'repo-management-trigger-active': isRepositoryManagementRoute }"
+        @click="openRepositoryManagement"
       >
-        <q-tooltip>Repository</q-tooltip>
+        <q-tooltip>Repository Management</q-tooltip>
       </q-btn>
     </div>
 
@@ -24,6 +27,8 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import CurrentRepoStatus from './CurrentRepoStatus.vue';
 import RepoCommandBar from './RepoCommandBar.vue';
 
@@ -35,6 +40,17 @@ defineProps<{
 defineEmits<{
   'toggle-theme': [];
 }>();
+
+const route = useRoute();
+const router = useRouter();
+
+const isRepositoryManagementRoute = computed(() => route.path === '/');
+
+const openRepositoryManagement = () => {
+  if (!isRepositoryManagementRoute.value) {
+    void router.push('/');
+  }
+};
 </script>
 
 <style scoped>
@@ -73,6 +89,7 @@ defineEmits<{
   font-size: 22px;
 }
 
+.repo-management-trigger-active,
 .repo-management-trigger:hover {
   color: var(--app-text);
   background: var(--app-surface-raised);

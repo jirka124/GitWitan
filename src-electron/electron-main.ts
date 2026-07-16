@@ -1,4 +1,4 @@
-import { BrowserWindow, app, ipcMain, type BrowserWindowConstructorOptions } from 'electron';
+import { BrowserWindow, app, ipcMain, shell, type BrowserWindowConstructorOptions } from 'electron';
 import path from 'node:path';
 import os from 'node:os';
 import { registerQuasarRuntime, resolveElectronAssetsPath } from '#q-app/electron/main';
@@ -93,6 +93,15 @@ async function createWindow() {
   }
 }
 
+ipcMain.handle('gitwitan:open-external-url', async (_event, url: string) => {
+  const parsedUrl = new URL(url);
+
+  if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
+    return;
+  }
+
+  await shell.openExternal(parsedUrl.toString());
+});
 ipcMain.on('gitwitan:set-window-theme', (event, theme: WindowTheme) => {
   const window = BrowserWindow.fromWebContents(event.sender);
 
