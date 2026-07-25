@@ -10,7 +10,7 @@
     <div class="repo-command-group" aria-label="Sync commands">
       <q-btn flat no-caps icon="sync" label="Fetch" class="repo-command" @click="openFetchDialog" />
       <q-btn flat no-caps icon="south" label="Pull" class="repo-command" @click="openPullDialog" />
-      <q-btn flat no-caps icon="north" label="Push" class="repo-command" />
+      <q-btn flat no-caps icon="north" label="Push" class="repo-command" @click="openPushDialog" />
     </div>
 
     <div class="repo-command-group" aria-label="Change commands">
@@ -55,6 +55,10 @@ const openFetchDialog = () => {
 
 const openPullDialog = () => {
   dialogsStore.openPullDialog();
+};
+
+const openPushDialog = () => {
+  dialogsStore.openPushDialog();
 };
 </script>
 

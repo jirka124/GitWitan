@@ -26,6 +26,8 @@
     <RepositoryFetchDialog @fetch="$emit('fetch', $event)" />
 
     <RepositoryPullDialog @pull="$emit('pull', $event)" />
+
+    <RepositoryPushDialog @push="$emit('push', $event)" />
   </q-toolbar>
 </template>
 
@@ -36,7 +38,12 @@ import CurrentRepoStatus from './CurrentRepoStatus.vue';
 import RepoCommandBar from './RepoCommandBar.vue';
 import RepositoryFetchDialog from '../repository/dialogs/RepositoryFetchDialog.vue';
 import RepositoryPullDialog from '../repository/dialogs/RepositoryPullDialog.vue';
-import type { FetchDialogPayload, PullDialogPayload } from '../../stores/repositoryCommandDialogs';
+import RepositoryPushDialog from '../repository/dialogs/RepositoryPushDialog.vue';
+import type {
+  FetchDialogPayload,
+  PullDialogPayload,
+  PushDialogPayload,
+} from '../../stores/repositoryCommandDialogs';
 
 defineProps<{
   themeIcon: string;
@@ -47,6 +54,7 @@ defineEmits<{
   'toggle-theme': [];
   fetch: [payload: FetchDialogPayload];
   pull: [payload: PullDialogPayload];
+  push: [payload: PushDialogPayload];
 }>();
 
 const route = useRoute();
