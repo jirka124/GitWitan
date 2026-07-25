@@ -15,7 +15,14 @@
 
     <div class="repo-command-group" aria-label="Change commands">
       <q-btn flat no-caps icon="call_merge" label="Merge" class="repo-command" />
-      <q-btn flat no-caps icon="inventory_2" label="Stash" class="repo-command" />
+      <q-btn
+        flat
+        no-caps
+        icon="inventory_2"
+        label="Stash"
+        class="repo-command"
+        @click="openStashDialog"
+      />
     </div>
 
     <q-btn
@@ -59,6 +66,10 @@ const openPullDialog = () => {
 
 const openPushDialog = () => {
   dialogsStore.openPushDialog();
+};
+
+const openStashDialog = () => {
+  dialogsStore.openStashDialog();
 };
 </script>
 

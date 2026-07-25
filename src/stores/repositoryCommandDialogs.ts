@@ -40,6 +40,11 @@ export type PushDialogPayload = {
   forcePush: boolean;
 };
 
+export type StashDialogPayload = {
+  message: string;
+  stageNewFiles: boolean;
+};
+
 type OpenFetchDialogOptions = {
   remotes?: RepositoryRemoteOption[];
   selectedRemote?: string;
@@ -60,6 +65,11 @@ type OpenPushDialogOptions = {
   selectedSourceBranch?: string;
   selectedDestinationRemote?: string;
   selectedDestinationBranch?: string;
+};
+
+type OpenStashDialogOptions = {
+  message?: string;
+  stageNewFiles?: boolean;
 };
 
 const defaultRemotes: RepositoryRemoteOption[] = [
@@ -110,6 +120,10 @@ export const useRepositoryCommandDialogsStore = defineStore('repositoryCommandDi
     selectedPushDestinationRemote: defaultRemotes[0]?.value ?? '',
     selectedPushDestinationBranch: defaultPushDestinationBranches[0]?.value ?? '',
     forcePush: false,
+
+    isStashDialogOpen: false,
+    stashMessage: '',
+    stageNewFiles: false,
   }),
 
   getters: {
@@ -254,6 +268,16 @@ export const useRepositoryCommandDialogsStore = defineStore('repositoryCommandDi
       if (!branchBelongsToSelectedRemote) {
         this.selectedPushDestinationBranch = this.selectedPushDestinationBranchFallback;
       }
+    },
+
+    openStashDialog(options: OpenStashDialogOptions = {}) {
+      this.stashMessage = options.message ?? this.stashMessage;
+      this.stageNewFiles = options.stageNewFiles ?? this.stageNewFiles;
+      this.isStashDialogOpen = true;
+    },
+
+    closeStashDialog() {
+      this.isStashDialogOpen = false;
     },
   },
 });

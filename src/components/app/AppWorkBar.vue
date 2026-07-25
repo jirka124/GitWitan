@@ -28,6 +28,8 @@
     <RepositoryPullDialog @pull="$emit('pull', $event)" />
 
     <RepositoryPushDialog @push="$emit('push', $event)" />
+
+    <RepositoryStashDialog @stash="$emit('stash', $event)" />
   </q-toolbar>
 </template>
 
@@ -39,10 +41,12 @@ import RepoCommandBar from './RepoCommandBar.vue';
 import RepositoryFetchDialog from '../repository/dialogs/RepositoryFetchDialog.vue';
 import RepositoryPullDialog from '../repository/dialogs/RepositoryPullDialog.vue';
 import RepositoryPushDialog from '../repository/dialogs/RepositoryPushDialog.vue';
+import RepositoryStashDialog from '../repository/dialogs/RepositoryStashDialog.vue';
 import type {
   FetchDialogPayload,
   PullDialogPayload,
   PushDialogPayload,
+  StashDialogPayload,
 } from '../../stores/repositoryCommandDialogs';
 
 defineProps<{
@@ -55,6 +59,7 @@ defineEmits<{
   fetch: [payload: FetchDialogPayload];
   pull: [payload: PullDialogPayload];
   push: [payload: PushDialogPayload];
+  stash: [payload: StashDialogPayload];
 }>();
 
 const route = useRoute();
