@@ -23,6 +23,7 @@
       :theme-label="themeLabel"
       @toggle-theme="$emit('toggle-theme')"
     />
+    <RepositoryFetchDialog @fetch="$emit('fetch', $event)" />
   </q-toolbar>
 </template>
 
@@ -31,6 +32,8 @@ import { computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import CurrentRepoStatus from './CurrentRepoStatus.vue';
 import RepoCommandBar from './RepoCommandBar.vue';
+import RepositoryFetchDialog from '../repository/dialogs/RepositoryFetchDialog.vue';
+import type { FetchDialogPayload } from '../../stores/repositoryCommandDialogs';
 
 defineProps<{
   themeIcon: string;
@@ -39,6 +42,7 @@ defineProps<{
 
 defineEmits<{
   'toggle-theme': [];
+  fetch: [payload: FetchDialogPayload];
 }>();
 
 const route = useRoute();
