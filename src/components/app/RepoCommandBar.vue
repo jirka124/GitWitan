@@ -31,35 +31,11 @@
         @click="openStashDialog"
       />
     </div>
-
-    <q-btn
-      flat
-      dense
-      round
-      :icon="themeIcon"
-      :aria-label="themeLabel"
-      class="repo-theme-trigger"
-      @click="$emit('toggle-theme')"
-    >
-      <q-tooltip>{{ themeLabel }}</q-tooltip>
-    </q-btn>
-    <q-btn flat dense round icon="settings" aria-label="Settings" class="repo-settings-trigger">
-      <q-tooltip>Settings</q-tooltip>
-    </q-btn>
   </div>
 </template>
 
 <script setup lang="ts">
 import { useRepositoryCommandDialogsStore } from '../../stores/repositoryCommandDialogs';
-
-defineProps<{
-  themeIcon: string;
-  themeLabel: string;
-}>();
-
-defineEmits<{
-  'toggle-theme': [];
-}>();
 
 const dialogsStore = useRepositoryCommandDialogsStore();
 
@@ -141,30 +117,6 @@ const openStashDialog = () => {
   margin-left: 2px;
   color: var(--app-text-muted) !important;
   font-size: 18px !important;
-}
-
-.repo-theme-trigger,
-.repo-settings-trigger {
-  width: 38px;
-  height: 38px;
-  min-height: 38px;
-  margin-left: 2px;
-  color: var(--app-text-muted);
-  background: var(--app-settings-bg);
-  border: 1px solid var(--app-command-group-border);
-  border-radius: var(--app-radius);
-}
-
-.repo-theme-trigger :deep(.q-icon),
-.repo-settings-trigger :deep(.q-icon) {
-  font-size: 22px;
-}
-
-.repo-theme-trigger:hover,
-.repo-settings-trigger:hover {
-  color: var(--app-text);
-  background: var(--app-surface-raised);
-  border-color: var(--app-border-strong);
 }
 
 @media (max-width: 1080px) {

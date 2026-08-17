@@ -1,21 +1,16 @@
 <template>
   <section class="repository-switcher" aria-label="Open repositories">
     <button
+      v-for="repository in openRepositories"
+      :key="repository.key"
       class="repository-switcher-item"
-      :class="{ 'repository-switcher-item-active': isRepositoryManagementRoute }"
+      :class="{ 'repository-switcher-item-active': repository.route === route.path }"
       type="button"
-      @click="openRepositoryManagement"
+      @click="openRepository(repository.route)"
     >
-      <span>No repository</span>
+      <span>{{ repository.name }}</span>
     </button>
-    <button
-      class="repository-switcher-item"
-      :class="{ 'repository-switcher-item-active': isRepositoryRoute }"
-      type="button"
-      @click="openRepository"
-    >
-      <span>GitWitan</span>
-    </button>
+
     <button
       class="repository-switcher-add"
       type="button"
@@ -28,21 +23,31 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+
+type OpenRepositoryTab = {
+  key: string;
+  name: string;
+  route: string;
+};
 
 const route = useRoute();
 const router = useRouter();
 
-const isRepositoryManagementRoute = computed(() => route.path === '/');
-const isRepositoryRoute = computed(() => route.path === '/repository');
+const openRepositories: OpenRepositoryTab[] = [
+  {
+    key: 'gitwitan',
+    name: 'GitWitan',
+    route: '/repository',
+  },
+];
 
 const openRepositoryManagement = () => {
   void router.push('/');
 };
 
-const openRepository = () => {
-  void router.push('/repository');
+const openRepository = (repositoryRoute: string) => {
+  void router.push(repositoryRoute);
 };
 </script>
 
