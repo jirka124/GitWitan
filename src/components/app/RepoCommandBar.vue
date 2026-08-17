@@ -14,7 +14,14 @@
     </div>
 
     <div class="repo-command-group" aria-label="Change commands">
-      <q-btn flat no-caps icon="call_merge" label="Merge" class="repo-command" />
+      <q-btn
+        flat
+        no-caps
+        icon="call_merge"
+        label="Merge"
+        class="repo-command"
+        @click="openMergeDialog"
+      />
       <q-btn
         flat
         no-caps
@@ -66,6 +73,10 @@ const openPullDialog = () => {
 
 const openPushDialog = () => {
   dialogsStore.openPushDialog();
+};
+
+const openMergeDialog = () => {
+  dialogsStore.openMergeDialog();
 };
 
 const openStashDialog = () => {

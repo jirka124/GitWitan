@@ -22,6 +22,13 @@ export type PushDestinationBranchOption = {
   remote: string;
 };
 
+export type MergeOptionValue = 'default' | 'no-ff' | 'squash' | 'no-commit';
+
+export type MergeOption = {
+  label: string;
+  value: MergeOptionValue;
+};
+
 export type FetchDialogPayload = {
   remote: string;
   fetchAllRemotes: boolean;
@@ -38,6 +45,13 @@ export type PushDialogPayload = {
   destinationRemote: string;
   destinationBranch: string;
   forcePush: boolean;
+};
+
+export type MergeDialogPayload = {
+  sourceBranch: string;
+  targetBranch: string;
+  mergeOption: MergeOptionValue;
+  canMergeWithoutConflicts: boolean;
 };
 
 export type StashDialogPayload = {
@@ -65,6 +79,15 @@ type OpenPushDialogOptions = {
   selectedSourceBranch?: string;
   selectedDestinationRemote?: string;
   selectedDestinationBranch?: string;
+};
+
+type OpenMergeDialogOptions = {
+  sourceBranches?: RepositoryBranchOption[];
+  targetBranches?: RepositoryBranchOption[];
+  selectedSourceBranch?: string;
+  selectedTargetBranch?: string;
+  selectedMergeOption?: MergeOptionValue;
+  canMergeWithoutConflicts?: boolean;
 };
 
 type OpenStashDialogOptions = {
@@ -96,6 +119,13 @@ const defaultPushDestinationBranches: PushDestinationBranchOption[] = [
   { label: 'main', value: 'main', remote: 'upstream' },
 ];
 
+const defaultMergeOptions: MergeOption[] = [
+  { label: 'Default', value: 'default' },
+  { label: 'No fast-forward', value: 'no-ff' },
+  { label: 'Squash', value: 'squash' },
+  { label: "Don't commit", value: 'no-commit' },
+];
+
 export const useRepositoryCommandDialogsStore = defineStore('repositoryCommandDialogs', {
   state: () => ({
     isFetchDialogOpen: false,
@@ -121,6 +151,16 @@ export const useRepositoryCommandDialogsStore = defineStore('repositoryCommandDi
     selectedPushDestinationBranch: defaultPushDestinationBranches[0]?.value ?? '',
     forcePush: false,
 
+    isMergeDialogOpen: false,
+    mergeSourceBranchOptions: [...defaultLocalBranches] as RepositoryBranchOption[],
+    mergeTargetBranchOptions: [...defaultLocalBranches] as RepositoryBranchOption[],
+    mergeOptionOptions: [...defaultMergeOptions] as MergeOption[],
+    selectedMergeSourceBranch:
+      defaultLocalBranches[1]?.value ?? defaultLocalBranches[0]?.value ?? '',
+    selectedMergeTargetBranch: defaultLocalBranches[0]?.value ?? '',
+    selectedMergeOption: defaultMergeOptions[0]?.value ?? 'default',
+    canMergeWithoutConflicts: true,
+
     isStashDialogOpen: false,
     stashMessage: '',
     stageNewFiles: false,
@@ -145,6 +185,9 @@ export const useRepositoryCommandDialogsStore = defineStore('repositoryCommandDi
       state.pushDestinationBranchOptions.find(
         (branch) => branch.remote === state.selectedPushDestinationRemote,
       )?.value ?? '',
+    selectedMergeSourceBranchFallback: (state) => state.mergeSourceBranchOptions[0]?.value ?? '',
+    selectedMergeTargetBranchFallback: (state) => state.mergeTargetBranchOptions[0]?.value ?? '',
+    selectedMergeOptionFallback: (state) => state.mergeOptionOptions[0]?.value ?? 'default',
   },
 
   actions: {
@@ -268,6 +311,45 @@ export const useRepositoryCommandDialogsStore = defineStore('repositoryCommandDi
       if (!branchBelongsToSelectedRemote) {
         this.selectedPushDestinationBranch = this.selectedPushDestinationBranchFallback;
       }
+    },
+
+    openMergeDialog(options: OpenMergeDialogOptions = {}) {
+      if (options.sourceBranches?.length) {
+        this.mergeSourceBranchOptions = options.sourceBranches;
+      }
+
+      if (options.targetBranches?.length) {
+        this.mergeTargetBranchOptions = options.targetBranches;
+      }
+
+      this.selectedMergeSourceBranch =
+        options.selectedSourceBranch ??
+        this.selectedMergeSourceBranch ??
+        this.selectedMergeSourceBranchFallback;
+
+      if (!this.selectedMergeSourceBranch) {
+        this.selectedMergeSourceBranch = this.selectedMergeSourceBranchFallback;
+      }
+
+      this.selectedMergeTargetBranch =
+        options.selectedTargetBranch ??
+        this.selectedMergeTargetBranch ??
+        this.selectedMergeTargetBranchFallback;
+
+      if (!this.selectedMergeTargetBranch) {
+        this.selectedMergeTargetBranch = this.selectedMergeTargetBranchFallback;
+      }
+
+      this.selectedMergeOption =
+        options.selectedMergeOption ?? this.selectedMergeOption ?? this.selectedMergeOptionFallback;
+
+      this.canMergeWithoutConflicts =
+        options.canMergeWithoutConflicts ?? this.canMergeWithoutConflicts;
+      this.isMergeDialogOpen = true;
+    },
+
+    closeMergeDialog() {
+      this.isMergeDialogOpen = false;
     },
 
     openStashDialog(options: OpenStashDialogOptions = {}) {
