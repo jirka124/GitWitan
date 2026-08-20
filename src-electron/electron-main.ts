@@ -1,4 +1,11 @@
-import { BrowserWindow, app, ipcMain, shell, type BrowserWindowConstructorOptions } from 'electron';
+﻿import {
+  BrowserWindow,
+  app,
+  dialog,
+  ipcMain,
+  shell,
+  type BrowserWindowConstructorOptions,
+} from 'electron';
 import path from 'node:path';
 import os from 'node:os';
 import { registerQuasarRuntime, resolveElectronAssetsPath } from '#q-app/electron/main';
@@ -102,6 +109,20 @@ ipcMain.handle('gitwitan:open-external-url', async (_event, url: string) => {
 
   await shell.openExternal(parsedUrl.toString());
 });
+ipcMain.handle('gitwitan:select-folder', async (event, defaultPath?: string) => {
+  const window = BrowserWindow.fromWebContents(event.sender);
+  const options = {
+    title: 'Select parent folder',
+    properties: ['openDirectory', 'createDirectory'] as ('openDirectory' | 'createDirectory')[],
+    ...(defaultPath ? { defaultPath } : {}),
+  };
+  const result = window
+    ? await dialog.showOpenDialog(window, options)
+    : await dialog.showOpenDialog(options);
+
+  return result.canceled ? undefined : result.filePaths[0];
+});
+
 ipcMain.on('gitwitan:set-window-theme', (event, theme: WindowTheme) => {
   const window = BrowserWindow.fromWebContents(event.sender);
 

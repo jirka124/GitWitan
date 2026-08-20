@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <header class="repository-management-header">
     <div class="repository-management-heading">
       <q-btn
@@ -23,7 +23,15 @@
     </div>
 
     <div class="repository-management-actions">
-      <q-btn flat dense no-caps icon="download" label="Clone" class="management-command" />
+      <q-btn
+        flat
+        dense
+        no-caps
+        icon="download"
+        label="Clone"
+        class="management-command"
+        @click="$emit('clone')"
+      />
       <q-btn flat dense no-caps icon="create_new_folder" label="Init" class="management-command" />
       <q-btn flat dense no-caps icon="add" label="Add Existing" class="management-command" />
     </div>
@@ -38,6 +46,7 @@ defineProps<{
 
 defineEmits<{
   back: [];
+  clone: [];
 }>();
 </script>
 

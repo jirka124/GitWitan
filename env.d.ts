@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Add types (that are not auto-magically added by Quasar CLI already)
  * for your custom variables to avoid TypeScript errors, like dynamic
  * process.env variables or definitions in dotenv files configured ONLY
@@ -13,3 +13,10 @@
  * }
  */
 interface ImportMetaEnv {}
+
+interface Window {
+  gitwitanShell?: {
+    openExternal: (url: string) => Promise<void>;
+    selectFolder?: (defaultPath?: string) => Promise<string | undefined>;
+  };
+}

@@ -1,4 +1,4 @@
-import { defineStore } from 'pinia';
+﻿import { defineStore } from 'pinia';
 
 export type RepositoryRemoteOption = {
   label: string;
@@ -59,6 +59,12 @@ export type StashDialogPayload = {
   stageNewFiles: boolean;
 };
 
+export type CloneDialogPayload = {
+  repositoryUrl: string;
+  parentFolder: string;
+  folderName: string;
+};
+
 type OpenFetchDialogOptions = {
   remotes?: RepositoryRemoteOption[];
   selectedRemote?: string;
@@ -95,6 +101,12 @@ type OpenStashDialogOptions = {
   stageNewFiles?: boolean;
 };
 
+type OpenCloneDialogOptions = {
+  repositoryUrl?: string;
+  parentFolder?: string;
+  folderName?: string;
+};
+
 const defaultRemotes: RepositoryRemoteOption[] = [
   { label: 'origin', value: 'origin' },
   { label: 'upstream', value: 'upstream' },
@@ -128,6 +140,11 @@ const defaultMergeOptions: MergeOption[] = [
 
 export const useRepositoryCommandDialogsStore = defineStore('repositoryCommandDialogs', {
   state: () => ({
+    isCloneDialogOpen: false,
+    cloneRepositoryUrl: 'https://gitrepo.com/any/name.git',
+    cloneParentFolder: 'C:\\workspace',
+    cloneFolderName: 'project-name',
+
     isFetchDialogOpen: false,
     fetchRemoteOptions: [...defaultRemotes] as RepositoryRemoteOption[],
     selectedFetchRemote: defaultRemotes[0]?.value ?? '',
@@ -191,6 +208,17 @@ export const useRepositoryCommandDialogsStore = defineStore('repositoryCommandDi
   },
 
   actions: {
+    openCloneDialog(options: OpenCloneDialogOptions = {}) {
+      this.cloneRepositoryUrl = options.repositoryUrl ?? this.cloneRepositoryUrl;
+      this.cloneParentFolder = options.parentFolder ?? this.cloneParentFolder;
+      this.cloneFolderName = options.folderName ?? this.cloneFolderName;
+      this.isCloneDialogOpen = true;
+    },
+
+    closeCloneDialog() {
+      this.isCloneDialogOpen = false;
+    },
+
     openFetchDialog(options: OpenFetchDialogOptions = {}) {
       if (options.remotes?.length) {
         this.fetchRemoteOptions = options.remotes;

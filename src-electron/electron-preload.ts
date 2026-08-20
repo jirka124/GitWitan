@@ -1,4 +1,4 @@
-/**
+﻿/**
  * This file is used specifically for security reasons.
  * Here you can securely expose privileged APIs into the renderer process
  * by leveraging Electron's contextBridge functionality and communicating
@@ -40,4 +40,5 @@ contextBridge.exposeInMainWorld('gitwitanWindow', {
 
 contextBridge.exposeInMainWorld('gitwitanShell', {
   openExternal: (url: string) => ipcRenderer.invoke('gitwitan:open-external-url', url),
+  selectFolder: (defaultPath?: string) => ipcRenderer.invoke('gitwitan:select-folder', defaultPath),
 });

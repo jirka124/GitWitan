@@ -1,9 +1,10 @@
-<template>
+﻿<template>
   <section class="repository-management-view" aria-label="Repository management">
     <RepositoryManagementHeader
       :can-go-back="canGoBack"
       :repository-count="repositories.length"
       @back="$emit('back')"
+      @clone="openCloneDialog"
     />
 
     <div class="repository-management-content">
@@ -41,6 +42,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { useQuasar } from 'quasar';
+import { useRepositoryCommandDialogsStore } from '../../stores/repositoryCommandDialogs';
 import RepositoryManagementDetail from './management/RepositoryManagementDetail.vue';
 import RepositoryManagementHeader from './management/RepositoryManagementHeader.vue';
 import RepositoryManagementList from './management/RepositoryManagementList.vue';
@@ -49,16 +51,6 @@ import {
   repositoryIconOptions,
 } from './management/repository-management.mock';
 import type { ManagedRepository } from './management/repository-management.types';
-
-type GitWitanShell = {
-  openExternal: (url: string) => Promise<void>;
-};
-
-declare global {
-  interface Window {
-    gitwitanShell?: GitWitanShell;
-  }
-}
 
 const props = defineProps<{
   canGoBack: boolean;
@@ -70,6 +62,7 @@ const emit = defineEmits<{
 }>();
 
 const $q = useQuasar();
+const dialogsStore = useRepositoryCommandDialogsStore();
 const repositories = managedRepositories;
 const fallbackRepository = repositories[0] as ManagedRepository;
 const activeRepositoryKey = ref(fallbackRepository.key);
@@ -107,6 +100,10 @@ const activeRepository = computed<ManagedRepository>(
 
 const onResize = (size: { width: number; height: number }) => {
   managementViewBox.value = size;
+};
+
+const openCloneDialog = () => {
+  dialogsStore.openCloneDialog();
 };
 
 const openRepository = (repositoryKey: string) => {

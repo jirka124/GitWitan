@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <q-toolbar class="app-workbar">
     <RepositoryManagementTrigger
       :active="isRepositoryManagementRoute"
@@ -21,6 +21,8 @@
       @toggle-theme="$emit('toggle-theme')"
     />
 
+    <RepositoryCloneDialog @clone="$emit('clone', $event)" />
+
     <RepositoryFetchDialog @fetch="$emit('fetch', $event)" />
 
     <RepositoryPullDialog @pull="$emit('pull', $event)" />
@@ -41,6 +43,7 @@ import CurrentRepoStatus from './CurrentRepoStatus.vue';
 import RepoCommandBar from './RepoCommandBar.vue';
 import RepositoryManagementBar from './RepositoryManagementBar.vue';
 import RepositoryManagementTrigger from './RepositoryManagementTrigger.vue';
+import RepositoryCloneDialog from '../repository/dialogs/RepositoryCloneDialog.vue';
 import RepositoryFetchDialog from '../repository/dialogs/RepositoryFetchDialog.vue';
 import RepositoryPullDialog from '../repository/dialogs/RepositoryPullDialog.vue';
 import RepositoryPushDialog from '../repository/dialogs/RepositoryPushDialog.vue';
@@ -48,6 +51,7 @@ import RepositoryMergeDialog from '../repository/dialogs/RepositoryMergeDialog.v
 import RepositoryStashDialog from '../repository/dialogs/RepositoryStashDialog.vue';
 import { managedRepositories } from '../repository/management/repository-management.mock';
 import type {
+  CloneDialogPayload,
   FetchDialogPayload,
   MergeDialogPayload,
   PullDialogPayload,
@@ -62,6 +66,7 @@ defineProps<{
 
 defineEmits<{
   'toggle-theme': [];
+  clone: [payload: CloneDialogPayload];
   fetch: [payload: FetchDialogPayload];
   pull: [payload: PullDialogPayload];
   push: [payload: PushDialogPayload];
