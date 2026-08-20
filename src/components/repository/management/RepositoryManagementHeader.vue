@@ -41,7 +41,15 @@
         class="management-command"
         @click="$emit('initRepository')"
       />
-      <q-btn flat dense no-caps icon="add" label="Add Existing" class="management-command" />
+      <q-btn
+        flat
+        dense
+        no-caps
+        icon="add"
+        label="Add Existing"
+        class="management-command"
+        @click="$emit('addExistingRepository')"
+      />
     </div>
   </header>
 </template>
@@ -56,6 +64,7 @@ defineEmits<{
   back: [];
   clone: [];
   initRepository: [];
+  addExistingRepository: [];
 }>();
 </script>
 

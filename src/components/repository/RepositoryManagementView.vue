@@ -6,6 +6,8 @@
       @back="$emit('back')"
       @clone="openCloneDialog"
       @init-repository="openInitRepositoryPicker"
+      `r`n
+      @add-existing-repository="openAddExistingRepositoryPicker"
     />
 
     <div class="repository-management-content">
@@ -109,13 +111,19 @@ const openCloneDialog = () => {
   dialogsStore.openCloneDialog();
 };
 
-const openInitRepositoryPicker = async () => {
-  const repositoryKey = await repositoryManagementStore.openInitRepositoryPicker();
-
+const selectTrackedRepository = (repositoryKey: string | undefined) => {
   if (repositoryKey) {
     activeRepositoryKey.value = repositoryKey;
     repositorySearchQuery.value = '';
   }
+};
+
+const openInitRepositoryPicker = async () => {
+  selectTrackedRepository(await repositoryManagementStore.openInitRepositoryPicker());
+};
+
+const openAddExistingRepositoryPicker = async () => {
+  selectTrackedRepository(await repositoryManagementStore.openAddExistingRepositoryPicker());
 };
 
 const openRepository = (repositoryKey: string) => {

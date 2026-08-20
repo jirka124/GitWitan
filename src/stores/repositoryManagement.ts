@@ -90,5 +90,15 @@ export const useRepositoryManagementStore = defineStore('repositoryManagement', 
 
       return this.addTrackedRepository(selectedPath);
     },
+
+    async openAddExistingRepositoryPicker() {
+      const selectedPath = await window.gitwitanShell?.selectFolder?.();
+
+      if (!selectedPath) {
+        return undefined;
+      }
+
+      return this.addTrackedRepository(selectedPath);
+    },
   },
 });
