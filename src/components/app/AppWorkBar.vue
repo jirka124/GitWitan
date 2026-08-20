@@ -49,7 +49,7 @@ import RepositoryPullDialog from '../repository/dialogs/RepositoryPullDialog.vue
 import RepositoryPushDialog from '../repository/dialogs/RepositoryPushDialog.vue';
 import RepositoryMergeDialog from '../repository/dialogs/RepositoryMergeDialog.vue';
 import RepositoryStashDialog from '../repository/dialogs/RepositoryStashDialog.vue';
-import { managedRepositories } from '../repository/management/repository-management.mock';
+import { useRepositoryManagementStore } from '../../stores/repositoryManagement';
 import type {
   CloneDialogPayload,
   FetchDialogPayload,
@@ -76,9 +76,10 @@ defineEmits<{
 
 const route = useRoute();
 const router = useRouter();
+const repositoryManagementStore = useRepositoryManagementStore();
 
 const isRepositoryManagementRoute = computed(() => route.path === '/');
-const managedRepositoryCount = computed(() => managedRepositories.length);
+const managedRepositoryCount = computed(() => repositoryManagementStore.repositoryCount);
 
 const openRepositoryManagement = () => {
   if (!isRepositoryManagementRoute.value) {

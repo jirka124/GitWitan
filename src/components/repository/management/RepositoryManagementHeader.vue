@@ -32,7 +32,15 @@
         class="management-command"
         @click="$emit('clone')"
       />
-      <q-btn flat dense no-caps icon="create_new_folder" label="Init" class="management-command" />
+      <q-btn
+        flat
+        dense
+        no-caps
+        icon="create_new_folder"
+        label="Init"
+        class="management-command"
+        @click="$emit('initRepository')"
+      />
       <q-btn flat dense no-caps icon="add" label="Add Existing" class="management-command" />
     </div>
   </header>
@@ -47,6 +55,7 @@ defineProps<{
 defineEmits<{
   back: [];
   clone: [];
+  initRepository: [];
 }>();
 </script>
 

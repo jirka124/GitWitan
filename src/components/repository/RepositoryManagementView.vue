@@ -5,6 +5,7 @@
       :repository-count="repositories.length"
       @back="$emit('back')"
       @clone="openCloneDialog"
+      @init-repository="openInitRepositoryPicker"
     />
 
     <div class="repository-management-content">
@@ -43,6 +44,7 @@
 import { computed, ref } from 'vue';
 import { useQuasar } from 'quasar';
 import { useRepositoryCommandDialogsStore } from '../../stores/repositoryCommandDialogs';
+import { useRepositoryManagementStore } from '../../stores/repositoryManagement';
 import RepositoryManagementDetail from './management/RepositoryManagementDetail.vue';
 import RepositoryManagementHeader from './management/RepositoryManagementHeader.vue';
 import RepositoryManagementList from './management/RepositoryManagementList.vue';
@@ -63,8 +65,9 @@ const emit = defineEmits<{
 
 const $q = useQuasar();
 const dialogsStore = useRepositoryCommandDialogsStore();
-const repositories = managedRepositories;
-const fallbackRepository = repositories[0] as ManagedRepository;
+const repositoryManagementStore = useRepositoryManagementStore();
+const repositories = computed(() => repositoryManagementStore.repositories);
+const fallbackRepository = managedRepositories[0] as ManagedRepository;
 const activeRepositoryKey = ref(fallbackRepository.key);
 const repositorySearchQuery = ref('');
 const managementViewBox = ref({ width: 100, height: 100 });
@@ -82,10 +85,10 @@ const filteredRepositories = computed(() => {
   const query = repositorySearchQuery.value.trim().toLocaleLowerCase();
 
   if (!query) {
-    return repositories;
+    return repositories.value;
   }
 
-  return repositories.filter((repository) => {
+  return repositories.value.filter((repository) => {
     const searchableText = `${repository.name} ${repository.path}`.toLocaleLowerCase();
 
     return searchableText.includes(query);
@@ -94,7 +97,7 @@ const filteredRepositories = computed(() => {
 
 const activeRepository = computed<ManagedRepository>(
   () =>
-    repositories.find((repository) => repository.key === activeRepositoryKey.value) ??
+    repositories.value.find((repository) => repository.key === activeRepositoryKey.value) ??
     fallbackRepository,
 );
 
@@ -104,6 +107,15 @@ const onResize = (size: { width: number; height: number }) => {
 
 const openCloneDialog = () => {
   dialogsStore.openCloneDialog();
+};
+
+const openInitRepositoryPicker = async () => {
+  const repositoryKey = await repositoryManagementStore.openInitRepositoryPicker();
+
+  if (repositoryKey) {
+    activeRepositoryKey.value = repositoryKey;
+    repositorySearchQuery.value = '';
+  }
 };
 
 const openRepository = (repositoryKey: string) => {
