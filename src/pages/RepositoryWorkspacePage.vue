@@ -17,10 +17,10 @@
         <template #after>
           <RepositoryMainView
             v-model:active-view="activeView"
-            :unstaged-tree="unstagedTree"
-            :staged-tree="stagedTree"
-            :unstaged-file-count="unstagedFileCount"
-            :staged-file-count="stagedFileCount"
+            :unstaged-tree="workspaceStore.unstagedTree"
+            :staged-tree="workspaceStore.stagedTree"
+            :unstaged-file-count="workspaceStore.unstagedTree.length"
+            :staged-file-count="workspaceStore.stagedTree.length"
           />
         </template>
       </q-splitter>
@@ -29,14 +29,27 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
+import { useRoute } from 'vue-router';
 import { useQuasar } from 'quasar';
 import RepositoryMainView from '../components/repository/RepositoryMainView.vue';
 import RepositorySidebar from '../components/repository/RepositorySidebar.vue';
 import RepositorySwitcher from '../components/repository/RepositorySwitcher.vue';
+import { useRepositoryWorkspaceStore } from '../stores/repositoryWorkspace';
 import type { ChangeTreeNode, RepositoryView } from '../types/repository';
 
 const $q = useQuasar();
+const route = useRoute();
+const workspaceStore = useRepositoryWorkspaceStore();
+
+const loadRepositoryStatus = () => {
+  if (typeof route.params.repositoryId === 'string') {
+    void workspaceStore.load(route.params.repositoryId);
+  }
+};
+
+onMounted(loadRepositoryStatus);
+watch(() => route.params.repositoryId, loadRepositoryStatus);
 
 const activeView = ref<RepositoryView>('history');
 const repositorySplitter = ref(200);

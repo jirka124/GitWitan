@@ -12,6 +12,19 @@ export type RepositoryRemote = {
   url: string;
 };
 
+export type RepositoryChangeKind = 'modified' | 'added' | 'deleted' | 'renamed' | 'untracked';
+
+export type RepositoryChangedFile = {
+  path: string;
+  kind: RepositoryChangeKind;
+};
+
+export type RepositoryStatus = {
+  repositoryId: string;
+  staged: RepositoryChangedFile[];
+  unstaged: RepositoryChangedFile[];
+};
+
 export type RepositorySummary = {
   repositoryId: string;
   rootPath: string;

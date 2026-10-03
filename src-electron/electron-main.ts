@@ -1,4 +1,4 @@
-﻿import {
+import {
   BrowserWindow,
   app,
   dialog,
@@ -121,6 +121,15 @@ ipcMain.handle('gitwitan:select-folder', async (event, defaultPath?: string) => 
     : await dialog.showOpenDialog(options);
 
   return result.canceled ? undefined : result.filePaths[0];
+});
+
+ipcMain.handle('gitwitan:repositories:status', async (_event, repositoryId: string) => {
+  const repository = (await repositoryRegistry.list()).find((item) => item.id === repositoryId);
+  if (!repository) {
+    throw new Error('Tracked repository was not found.');
+  }
+
+  return gitRepositoryService.readStatus(repositoryId, repository.path);
 });
 
 ipcMain.on('gitwitan:set-window-theme', (event, theme: WindowTheme) => {

@@ -1,6 +1,12 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import type { RepositoryRemote, RepositorySummary } from '../src/types/repository-data';
+import type {
+  RepositoryChangeKind,
+  RepositoryChangedFile,
+  RepositoryRemote,
+  RepositoryStatus,
+  RepositorySummary,
+} from '../src/types/repository-data';
 
 const executeFile = promisify(execFile);
 
@@ -12,7 +18,7 @@ export class GitRepositoryService {
   async readSummary(repositoryId: string, rootPath: string): Promise<RepositorySummary> {
     const [branch, status, remotes, commitCount, lastCommitAt] = await Promise.all([
       this.git(rootPath, ['branch', '--show-current']).then((value) => value.trim() || undefined),
-      this.git(rootPath, ['status', '--porcelain=v1']).then(countChangedFiles),
+      this.readStatus(repositoryId, rootPath),
       this.readRemotes(rootPath),
       this.git(rootPath, ['rev-list', '--count', 'HEAD'])
         .then((value) => Number.parseInt(value.trim(), 10))
@@ -22,7 +28,19 @@ export class GitRepositoryService {
         .catch(() => undefined),
     ]);
 
-    return { repositoryId, rootPath, branch, dirtyCount: status, commitCount, lastCommitAt, remotes };
+    return {
+      repositoryId,
+      rootPath,
+      branch,
+      dirtyCount: new Set([...status.staged, ...status.unstaged].map((file) => file.path)).size,
+      commitCount,
+      lastCommitAt,
+      remotes,
+    };
+  }
+
+  async readStatus(repositoryId: string, rootPath: string): Promise<RepositoryStatus> {
+    return parseStatus(repositoryId, await this.git(rootPath, ['status', '--porcelain=v1']));
   }
 
   private async readRemotes(rootPath: string): Promise<RepositoryRemote[]> {
@@ -48,6 +66,35 @@ export class GitRepositoryService {
   }
 }
 
-function countChangedFiles(statusOutput: string) {
-  return statusOutput.split(/\r?\n/).filter(Boolean).length;
+function parseStatus(repositoryId: string, output: string): RepositoryStatus {
+  const staged: RepositoryChangedFile[] = [];
+  const unstaged: RepositoryChangedFile[] = [];
+
+  for (const line of output.split(/\r?\n/)) {
+    if (!line || line.startsWith('!!')) continue;
+
+    const indexStatus = line[0] ?? ' ';
+    const workTreeStatus = line[1] ?? ' ';
+    const filePath = line.slice(3);
+
+    if (!filePath) continue;
+    if (indexStatus !== ' ' && indexStatus !== '?') {
+      staged.push({ path: filePath, kind: toChangeKind(indexStatus) });
+    }
+    if (workTreeStatus !== ' ') {
+      unstaged.push({ path: filePath, kind: toChangeKind(workTreeStatus) });
+    }
+    if (indexStatus === '?' && workTreeStatus === '?') {
+      unstaged.push({ path: filePath, kind: 'untracked' });
+    }
+  }
+
+  return { repositoryId, staged, unstaged };
+}
+
+function toChangeKind(status: string): RepositoryChangeKind {
+  if (status === 'A') return 'added';
+  if (status === 'D') return 'deleted';
+  if (status === 'R') return 'renamed';
+  return 'modified';
 }

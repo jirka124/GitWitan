@@ -5,7 +5,7 @@ export type ChangeTreeNode = {
   label: string;
   icon: string;
   caption?: string;
-  status?: 'modified' | 'added' | 'untracked';
+  status?: 'modified' | 'added' | 'deleted' | 'renamed' | 'untracked';
   badge?: string;
   children?: ChangeTreeNode[];
 };
