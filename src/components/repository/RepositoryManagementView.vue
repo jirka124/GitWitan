@@ -122,7 +122,7 @@ const selectTrackedRepository = (repositoryKey: string | undefined) => {
 };
 
 const openInitRepositoryPicker = async () => {
-  await openAddExistingRepositoryPicker();
+  selectTrackedRepository(await repositoryManagementStore.openInitRepositoryPicker());
 };
 
 const openAddExistingRepositoryPicker = async () => {

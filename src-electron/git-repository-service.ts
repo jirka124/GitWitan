@@ -24,6 +24,13 @@ export class GitRepositoryService {
     });
   }
 
+  async init(folderPath: string) {
+    await executeFile('git', ['init', folderPath], {
+      windowsHide: true,
+      maxBuffer: 1024 * 1024,
+    });
+  }
+
   async readSummary(repositoryId: string, rootPath: string): Promise<RepositorySummary> {
     const [branch, status, remotes, commitCount, lastCommitAt] = await Promise.all([
       this.git(rootPath, ['branch', '--show-current']).then((value) => value.trim() || undefined),

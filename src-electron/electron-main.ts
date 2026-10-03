@@ -237,6 +237,13 @@ ipcMain.handle(
   },
 );
 
+ipcMain.handle('gitwitan:repositories:init', async (_event, folderPath: string) => {
+  const targetPath = path.resolve(folderPath);
+  await gitRepositoryService.init(targetPath);
+  const rootPath = await gitRepositoryService.resolveRoot(targetPath);
+  return toRepositoryRecord(await repositoryRegistry.track(rootPath, path.basename(rootPath)));
+});
+
 ipcMain.handle('gitwitan:repositories:add-existing', async (_event, folderPath: string) => {
   const rootPath = await gitRepositoryService.resolveRoot(folderPath);
   const repository = await repositoryRegistry.track(rootPath, path.basename(rootPath));

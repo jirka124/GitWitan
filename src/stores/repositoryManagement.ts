@@ -76,6 +76,29 @@ export const useRepositoryManagementStore = defineStore('repositoryManagement', 
       }
     },
 
+    async openInitRepositoryPicker() {
+      const selectedPath = await window.gitwitanShell?.selectFolder?.();
+      if (!selectedPath) return undefined;
+
+      if (!window.gitwitanRepositories) {
+        this.error = 'Repository initialization is available only in the Electron app.';
+        return undefined;
+      }
+
+      this.isLoading = true;
+      this.error = undefined;
+      try {
+        const record = await window.gitwitanRepositories.init(selectedPath);
+        this.applyRecord(record);
+        return record.repository.id;
+      } catch (error: unknown) {
+        this.error = error instanceof Error ? error.message : 'Unable to initialize repository.';
+        return undefined;
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
     async openAddExistingRepositoryPicker() {
       const selectedPath = await window.gitwitanShell?.selectFolder?.();
       if (!selectedPath) return undefined;
