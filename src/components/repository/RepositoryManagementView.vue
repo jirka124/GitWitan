@@ -6,7 +6,6 @@
       @back="$emit('back')"
       @clone="openCloneDialog"
       @init-repository="openInitRepositoryPicker"
-      `r`n
       @add-existing-repository="openAddExistingRepositoryPicker"
     />
 

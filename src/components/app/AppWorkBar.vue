@@ -67,7 +67,6 @@ defineProps<{
 
 defineEmits<{
   'toggle-theme': [];
-  clone: [payload: CloneDialogPayload];
   fetch: [payload: FetchDialogPayload];
   pull: [payload: PullDialogPayload];
   push: [payload: PushDialogPayload];
