@@ -15,24 +15,19 @@
     </div>
 
     <div v-else class="diff-preview-content">
-      <header class="diff-preview-file-header">
-        <q-icon :name="activeChange.node.icon" />
-        <div>
-          <h1>{{ activeChange.node.label }}</h1>
-          <p>{{ activeChange.node.caption ?? activeChange.node.label }}</p>
-        </div>
-        <span
-          v-if="activeChange.node.badge"
-          class="diff-preview-status"
-          :class="`diff-preview-status-${activeChange.node.status}`"
+      <pre v-if="isLoading" class="diff-preview-placeholder">Loading diff&</pre>
+      <div v-else-if="diffLines.length" class="diff-lines" aria-label="File diff">
+        <div
+          v-for="(line, index) in diffLines"
+          :key="`${index}:${line.content}`"
+          class="diff-line"
+          :class="`diff-line-${line.kind}`"
         >
-          {{ activeChange.node.badge }}
-        </span>
-      </header>
-
-      <pre class="diff-preview-placeholder">{{
-        isLoading ? 'Loading diff&' : diffContent || 'No textual diff is available for this file.'
-      }}</pre>
+          <span class="diff-line-marker" aria-hidden="true">{{ markerFor(line.kind) }}</span>
+          <code>{{ line.content }}</code>
+        </div>
+      </div>
+      <pre v-else class="diff-preview-placeholder">No textual diff is available for this file.</pre>
     </div>
   </section>
 </template>
@@ -46,26 +41,64 @@ type ActiveChange = {
   node: ChangeTreeNode;
 };
 
+type DiffLineKind = 'added' | 'removed' | 'hunk' | 'context';
+
+type DiffLine = {
+  content: string;
+  kind: DiffLineKind;
+};
+
 const props = defineProps<{
   activeChange?: ActiveChange | undefined;
   diffContent: string;
   isLoading: boolean;
 }>();
 
-const subtitle = computed(() => {
-  if (!props.activeChange) {
-    return 'Select a changed file';
-  }
+const subtitle = computed(() =>
+  props.activeChange
+    ? (props.activeChange.node.caption ?? props.activeChange.node.label)
+    : 'Select a changed file',
+);
 
-  return props.activeChange.node.caption ?? props.activeChange.node.label;
-});
+const diffLines = computed<DiffLine[]>(() =>
+  props.diffContent
+    .split(/\r?\n/)
+    .filter((line) => !isGitMetadata(line))
+    .map((rawContent) => {
+      const kind = rawContent.startsWith('+')
+        ? 'added'
+        : rawContent.startsWith('-')
+          ? 'removed'
+          : rawContent.startsWith('@@')
+            ? 'hunk'
+            : 'context';
+
+      return {
+        kind,
+        content: kind === 'hunk' ? rawContent : rawContent.slice(1),
+      };
+    }),
+);
+
+const markerFor = (kind: DiffLineKind) =>
+  kind === 'added' ? '+' : kind === 'removed' ? '-' : kind === 'hunk' ? '>' : ' ';
+const isGitMetadata = (line: string) =>
+  line.startsWith('diff --git ') ||
+  line.startsWith('index ') ||
+  line.startsWith('--- ') ||
+  line.startsWith('+++ ') ||
+  line.startsWith('new file mode ') ||
+  line.startsWith('deleted file mode ') ||
+  line.startsWith('similarity index ') ||
+  line.startsWith('rename from ') ||
+  line.startsWith('rename to ');
 </script>
 
 <style scoped>
 .diff-preview-panel {
-  height: 100%;
   display: flex;
   flex-direction: column;
+  height: 100%;
   min-width: 0;
   min-height: 0;
   overflow: hidden;
@@ -125,108 +158,95 @@ const subtitle = computed(() => {
   text-align: center;
 }
 
-.diff-preview-empty h1,
-.diff-preview-file-header h1 {
-  margin: 0;
+.diff-preview-empty h1 {
+  margin: 10px 0 4px;
   color: var(--app-text);
   font-size: 16px;
   font-weight: 650;
 }
 
-.diff-preview-empty h1 {
-  margin-top: 10px;
-  margin-bottom: 4px;
-}
-
-.diff-preview-empty p,
-.diff-preview-file-header p {
+.diff-preview-empty p {
   margin: 0;
-  color: var(--app-text-muted);
 }
 
 .diff-preview-content {
-  display: flex;
   flex: 1 1 auto;
-  flex-direction: column;
   min-height: 0;
-  overflow: hidden;
+  overflow: auto;
 }
 
-.diff-preview-file-header {
-  display: grid;
-  grid-template-columns: 20px minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--app-border);
-}
-
-.diff-preview-file-header :deep(.q-icon) {
-  color: var(--app-accent);
-  font-size: 16px;
-}
-
-.diff-preview-file-header h1,
-.diff-preview-file-header p {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.diff-preview-file-header h1 {
-  font-size: 13px;
-}
-
-.diff-preview-status {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-  color: var(--app-bg);
-  font-size: 10px;
-  font-weight: 800;
-  border-radius: 4px;
-}
-
-.diff-preview-status-modified {
-  background: var(--app-status-warning);
-}
-
-.diff-preview-status-added,
-.diff-preview-status-untracked {
-  background: var(--app-accent);
+.diff-lines,
+.diff-preview-placeholder {
+  margin: 0;
+  padding: 10px 0;
+  font-family: Consolas, 'Liberation Mono', monospace;
+  font-size: 12px;
+  line-height: 1.55;
 }
 
 .diff-preview-placeholder {
-  flex: 1 1 auto;
-  min-height: 0;
-  padding: 12px;
-  overflow: auto;
-  font-family: Consolas, 'Liberation Mono', monospace;
-  font-size: 12px;
-  line-height: 1.5;
+  padding: 14px;
+  color: var(--app-text-muted);
+  white-space: pre-wrap;
 }
 
 .diff-line {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr);
   min-height: 20px;
-  padding: 1px 8px;
-  border-left: 2px solid transparent;
+  padding-right: 12px;
+  color: var(--app-text-muted);
+  border-left: 3px solid transparent;
 }
 
-.diff-line-context {
+.diff-line-marker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   color: var(--app-caption);
+  font-weight: 800;
+  user-select: none;
 }
 
-.diff-line-removed {
-  color: var(--app-danger);
-  background: color-mix(in srgb, var(--app-danger) 10%, transparent);
-  border-left-color: var(--app-danger);
+.diff-line code {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font: inherit;
+  white-space: pre-wrap;
 }
 
 .diff-line-added {
-  color: var(--app-accent);
-  background: color-mix(in srgb, var(--app-accent) 10%, transparent);
+  color: color-mix(in srgb, var(--app-accent) 85%, white);
+  background: color-mix(in srgb, var(--app-accent) 14%, transparent);
   border-left-color: var(--app-accent);
+}
+
+.diff-line-added .diff-line-marker {
+  color: var(--app-accent);
+  background: color-mix(in srgb, var(--app-accent) 14%, transparent);
+}
+
+.diff-line-removed {
+  color: color-mix(in srgb, var(--app-danger) 82%, white);
+  background: color-mix(in srgb, var(--app-danger) 13%, transparent);
+  border-left-color: var(--app-danger);
+}
+
+.diff-line-removed .diff-line-marker {
+  color: var(--app-danger);
+  background: color-mix(in srgb, var(--app-danger) 13%, transparent);
+}
+
+.diff-line-hunk {
+  margin: 7px 0 3px;
+  color: var(--app-caption);
+  font-size: 11px;
+  font-style: italic;
+  background: color-mix(in srgb, var(--app-border) 35%, transparent);
+  border-left-color: var(--app-border-strong);
+}
+
+.diff-line-hunk .diff-line-marker {
+  color: var(--app-icon-muted);
 }
 </style>
