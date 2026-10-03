@@ -52,6 +52,7 @@
 import { computed, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import { useQuasar } from 'quasar';
+import { useRepositoryWorkspaceStore } from '../../../stores/repositoryWorkspace';
 import type { ChangeTreeNode } from '../../../types/repository';
 import ChangedFilesPanel from './ChangedFilesPanel.vue';
 import CommitPanel from './CommitPanel.vue';
@@ -74,6 +75,7 @@ defineProps<{
 
 const $q = useQuasar();
 const route = useRoute();
+const workspaceStore = useRepositoryWorkspaceStore();
 const changesViewBox = ref({ width: 100, height: 100 });
 const changesPreviewSplitter = ref(200);
 const commitSubject = ref('');
@@ -112,11 +114,16 @@ const selectChange = async (area: ChangeArea, node: ChangeTreeNode) => {
   }
 };
 
-const requestChangeAction = (action: ChangeAction, node: ChangeTreeNode) => {
-  if (!node.children?.length) {
-    void selectChange(action === 'stage' ? 'unstaged' : 'staged', node);
-  }
-};
+const requestChangeAction = async (action: ChangeAction, node: ChangeTreeNode) => {
+  if (node.children?.length || typeof route.params.repositoryId !== 'string') return;
+
+  const filePath = node.caption ?? node.label;
+  if (action === 'stage') await workspaceStore.stage(route.params.repositoryId, filePath);
+  else await workspaceStore.unstage(route.params.repositoryId, filePath);
+
+  activeChange.value = undefined;
+  diffContent.value = '';
+}
 </script>
 
 <style scoped>

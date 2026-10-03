@@ -50,6 +50,14 @@ export class GitRepositoryService {
     );
   }
 
+  async stage(rootPath: string, filePaths: string[]) {
+    await this.git(rootPath, ['add', '--', ...filePaths]);
+  }
+
+  async unstage(rootPath: string, filePaths: string[]) {
+    await this.git(rootPath, ['restore', '--staged', '--', ...filePaths]);
+  }
+
   private async readRemotes(rootPath: string): Promise<RepositoryRemote[]> {
     const names = (await this.git(rootPath, ['remote']))
       .split(/\r?\n/)

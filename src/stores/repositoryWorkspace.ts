@@ -49,5 +49,30 @@ export const useRepositoryWorkspaceStore = defineStore('repositoryWorkspace', {
         if (this.repositoryId === repositoryId) this.isLoading = false;
       }
     },
+
+    async stage(repositoryId: string, filePath: string) {
+      await this.runChangeAction(repositoryId, filePath, 'stage');
+    },
+
+    async unstage(repositoryId: string, filePath: string) {
+      await this.runChangeAction(repositoryId, filePath, 'unstage');
+    },
+
+    async runChangeAction(repositoryId: string, filePath: string, action: 'stage' | 'unstage') {
+      if (!window.gitwitanRepositories) return;
+
+      this.isLoading = true;
+      this.error = undefined;
+      try {
+        if (action === 'stage') await window.gitwitanRepositories.stage(repositoryId, [filePath]);
+        else await window.gitwitanRepositories.unstage(repositoryId, [filePath]);
+
+        await this.load(repositoryId);
+      } catch (error: unknown) {
+        this.error = error instanceof Error ? error.message : `Unable to ${action} file.`;
+      } finally {
+        this.isLoading = false;
+      }
+    },
   },
 });

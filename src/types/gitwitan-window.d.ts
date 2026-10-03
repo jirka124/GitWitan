@@ -8,6 +8,8 @@ declare global {
       refresh: (repositoryId: string) => Promise<RepositoryRecord>;
       status: (repositoryId: string) => Promise<RepositoryStatus>;
       diff: (repositoryId: string, filePath: string, staged: boolean) => Promise<string>;
+      stage: (repositoryId: string, filePaths: string[]) => Promise<void>;
+      unstage: (repositoryId: string, filePaths: string[]) => Promise<void>;
     };
   }
 }

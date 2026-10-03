@@ -144,6 +144,24 @@ ipcMain.handle(
   },
 );
 
+ipcMain.handle(
+  'gitwitan:repositories:stage',
+  async (_event, repositoryId: string, filePaths: string[]) => {
+    const repository = (await repositoryRegistry.list()).find((item) => item.id === repositoryId);
+    if (!repository) throw new Error('Tracked repository was not found.');
+    await gitRepositoryService.stage(repository.path, filePaths);
+  },
+);
+
+ipcMain.handle(
+  'gitwitan:repositories:unstage',
+  async (_event, repositoryId: string, filePaths: string[]) => {
+    const repository = (await repositoryRegistry.list()).find((item) => item.id === repositoryId);
+    if (!repository) throw new Error('Tracked repository was not found.');
+    await gitRepositoryService.unstage(repository.path, filePaths);
+  },
+);
+
 ipcMain.on('gitwitan:set-window-theme', (event, theme: WindowTheme) => {
   const window = BrowserWindow.fromWebContents(event.sender);
 
