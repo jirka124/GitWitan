@@ -36,7 +36,7 @@ import RepositoryMainView from '../components/repository/RepositoryMainView.vue'
 import RepositorySidebar from '../components/repository/RepositorySidebar.vue';
 import RepositorySwitcher from '../components/repository/RepositorySwitcher.vue';
 import { useRepositoryWorkspaceStore } from '../stores/repositoryWorkspace';
-import type { ChangeTreeNode, RepositoryView } from '../types/repository';
+import type { RepositoryView } from '../types/repository';
 
 const $q = useQuasar();
 const route = useRoute();
@@ -56,121 +56,6 @@ const repositorySplitter = ref(200);
 
 const repositorySplitterLimits = computed<[number, number]>(() => [200, $q.screen.width - 8]);
 
-const unstagedTree: ChangeTreeNode[] = [
-  {
-    key: 'unstaged-src',
-    label: 'src',
-    icon: 'folder',
-    children: [
-      {
-        key: 'unstaged-src-layouts',
-        label: 'layouts',
-        icon: 'folder',
-        children: [
-          {
-            key: 'unstaged-src-layouts-main-layout',
-            label: 'MainLayout.vue',
-            caption: 'src/layouts/MainLayout.vue',
-            icon: 'description',
-            status: 'modified',
-            badge: 'M',
-          },
-        ],
-      },
-      {
-        key: 'unstaged-src-css',
-        label: 'css',
-        icon: 'folder',
-        children: [
-          {
-            key: 'unstaged-src-css-app',
-            label: 'app.css',
-            caption: 'src/css/app.css',
-            icon: 'description',
-            status: 'modified',
-            badge: 'M',
-          },
-        ],
-      },
-      {
-        key: 'unstaged-src-services',
-        label: 'services',
-        icon: 'folder',
-        children: [
-          {
-            key: 'unstaged-src-services-git-service',
-            label: 'git-service.ts',
-            caption: 'src/services/git-service.ts',
-            icon: 'description',
-            status: 'added',
-            badge: 'A',
-          },
-        ],
-      },
-      {
-        key: 'unstaged-src-components',
-        label: 'components',
-        icon: 'folder',
-        children: [
-          {
-            key: 'unstaged-src-components-repository-picker',
-            label: 'RepositoryPicker.vue',
-            caption: 'src/components/RepositoryPicker.vue',
-            icon: 'description',
-            status: 'untracked',
-            badge: 'U',
-          },
-        ],
-      },
-    ],
-  },
-];
-
-const stagedTree: ChangeTreeNode[] = [
-  {
-    key: 'staged-src',
-    label: 'src',
-    icon: 'folder',
-    children: [
-      {
-        key: 'staged-src-pages',
-        label: 'pages',
-        icon: 'folder',
-        children: [
-          {
-            key: 'staged-src-pages-index',
-            label: 'IndexPage.vue',
-            caption: 'src/pages/IndexPage.vue',
-            icon: 'description',
-            status: 'modified',
-            badge: 'M',
-          },
-        ],
-      },
-      {
-        key: 'staged-src-stores',
-        label: 'stores',
-        icon: 'folder',
-        children: [
-          {
-            key: 'staged-src-stores-types',
-            label: 'types.ts',
-            caption: 'src/stores/types.ts',
-            icon: 'description',
-            status: 'added',
-            badge: 'A',
-          },
-        ],
-      },
-    ],
-  },
-];
-
-const countFiles = (nodes: ChangeTreeNode[]): number =>
-  nodes.reduce((total, node) => total + (node.children ? countFiles(node.children) : 1), 0);
-
-const unstagedFileCount = computed(() => countFiles(unstagedTree));
-const stagedFileCount = computed(() => countFiles(stagedTree));
 </script>
 
 <style scoped>
