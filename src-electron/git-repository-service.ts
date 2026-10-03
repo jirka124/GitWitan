@@ -4,8 +4,10 @@ import type {
   RepositoryChangeKind,
   RepositoryChangedFile,
   RepositoryRemote,
+  RepositoryRemoteBranch,
   RepositoryStatus,
   RepositorySummary,
+  RepositoryWorkspaceOverview,
 } from '../src/types/repository-data';
 
 const executeFile = promisify(execFile);
@@ -56,6 +58,67 @@ export class GitRepositoryService {
 
   async unstage(rootPath: string, filePaths: string[]) {
     await this.git(rootPath, ['restore', '--staged', '--', ...filePaths]);
+  }
+
+  async readWorkspaceOverview(
+    repositoryId: string,
+    rootPath: string,
+  ): Promise<RepositoryWorkspaceOverview> {
+    const [branchesOutput, remoteBranchesOutput, stashesOutput, historyOutput] = await Promise.all([
+      this.git(rootPath, ['for-each-ref', 'refs/heads', '--format=%(refname:short)%09%(HEAD)']),
+      this.git(rootPath, ['for-each-ref', 'refs/remotes', '--format=%(refname:short)']),
+      this.git(rootPath, ['stash', 'list', '--format=%gd%x09%gs']),
+      this.git(rootPath, [
+        'log',
+        '-100',
+        '--date=iso-strict',
+        '--pretty=format:%H%x1f%h%x1f%P%x1f%an%x1f%cn%x1f%cI%x1f%s%x1e',
+      ]).catch(() => ''),
+    ]);
+
+    return {
+      repositoryId,
+      branches: branchesOutput
+        .split(/\r?\n/)
+        .filter(Boolean)
+        .map((line) => {
+          const [name, head] = line.split('\t');
+          return { name: name ?? '', isCurrent: head === '*' };
+        }),
+      remoteBranches: remoteBranchesOutput
+        .split(/\r?\n/)
+        .map((line) => line.replace(/^refs\/remotes\//, '').replace(/^\/+/, ''))
+        .filter((line) => line && !line.endsWith('/HEAD'))
+        .map((line) => {
+          const separatorIndex = line.indexOf('/');
+          return separatorIndex > 0
+            ? { remote: line.slice(0, separatorIndex), name: line.slice(separatorIndex + 1) }
+            : undefined;
+        })
+        .filter((branch): branch is RepositoryRemoteBranch => branch !== undefined && Boolean(branch.name)),
+      stashes: stashesOutput
+        .split(/\r?\n/)
+        .filter(Boolean)
+        .map((line) => {
+          const [id, message] = line.split('\t');
+          return { id: id ?? '', message: message ?? '' };
+        }),
+      history: historyOutput
+        .split('\x1e')
+        .filter(Boolean)
+        .map((entry) => {
+          const [id, shortId, parents, author, committer, committedAt, message] = entry.split('\x1f');
+          return {
+            id: id ?? '',
+            shortId: shortId ?? '',
+            parents: parents?.split(' ').filter(Boolean) ?? [],
+            author: author ?? '',
+            committer: committer ?? '',
+            committedAt: committedAt ?? '',
+            message: message ?? '',
+          };
+        }),
+    };
   }
 
   private async readRemotes(rootPath: string): Promise<RepositoryRemote[]> {

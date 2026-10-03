@@ -162,6 +162,12 @@ ipcMain.handle(
   },
 );
 
+ipcMain.handle('gitwitan:repositories:overview', async (_event, repositoryId: string) => {
+  const repository = (await repositoryRegistry.list()).find((item) => item.id === repositoryId);
+  if (!repository) throw new Error('Tracked repository was not found.');
+  return gitRepositoryService.readWorkspaceOverview(repositoryId, repository.path);
+});
+
 ipcMain.on('gitwitan:set-window-theme', (event, theme: WindowTheme) => {
   const window = BrowserWindow.fromWebContents(event.sender);
 

@@ -1,4 +1,4 @@
-import type { RepositoryRecord, RepositoryStatus } from './repository-data';
+import type { RepositoryRecord, RepositoryStatus, RepositoryWorkspaceOverview } from './repository-data';
 
 declare global {
   interface Window {
@@ -7,6 +7,7 @@ declare global {
       addExisting: (folderPath: string) => Promise<RepositoryRecord>;
       refresh: (repositoryId: string) => Promise<RepositoryRecord>;
       status: (repositoryId: string) => Promise<RepositoryStatus>;
+      overview: (repositoryId: string) => Promise<RepositoryWorkspaceOverview>;
       diff: (repositoryId: string, filePath: string, staged: boolean) => Promise<string>;
       stage: (repositoryId: string, filePaths: string[]) => Promise<void>;
       unstage: (repositoryId: string, filePaths: string[]) => Promise<void>;

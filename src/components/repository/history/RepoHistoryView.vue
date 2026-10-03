@@ -1,62 +1,56 @@
-﻿<template>
-  <q-splitter
-    v-model="detailSplitter"
-    horizontal
-    :limits="detailSplitterLimits"
-    class="history-view-splitter"
-  >
+<template>
+  <q-splitter v-model="detailSplitter" horizontal :limits="detailSplitterLimits" class="history-view-splitter">
     <template #before>
-      <CommitGraphTable
-        :commits="commits"
-        :selected-commit-id="selectedCommitId"
-        @select-commit="selectedCommitId = $event"
-      />
+      <CommitGraphTable :commits="commits" :selected-commit-id="selectedCommitId" @select-commit="selectedCommitId = $event" />
     </template>
-
     <template #after>
-      <CommitDetailPanel :commit="selectedCommit" />
+      <CommitDetailPanel v-if="selectedCommit" :commit="selectedCommit" />
+      <div v-else class="history-empty">No commits found</div>
     </template>
   </q-splitter>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
+import { useRoute } from 'vue-router';
 import CommitDetailPanel from './CommitDetailPanel.vue';
 import CommitGraphTable from './CommitGraphTable.vue';
-import { historyCommits } from './history.mock';
 import type { HistoryCommit } from './history.types';
+import type { RepositoryHistoryEntry } from '../../../types/repository-data';
 
-const commits = historyCommits;
+const route = useRoute();
 const detailSplitter = ref(68);
-const selectedCommitId = ref('a91f2c7');
+const selectedCommitId = ref('');
+const entries = ref<RepositoryHistoryEntry[]>([]);
 const detailSplitterLimits = computed<[number, number]>(() => [45, 84]);
-const fallbackCommit = commits[0] as HistoryCommit;
-const selectedCommit = computed<HistoryCommit>(
-  () => commits.find((commit) => commit.id === selectedCommitId.value) ?? fallbackCommit,
+
+const commits = computed<HistoryCommit[]>(() =>
+  entries.value.map((entry) => ({
+    ...entry,
+    fullId: entry.id,
+    time: entry.committedAt,
+    kindIcon: entry.parents.length > 1 ? 'call_merge' : 'commit',
+    refs: [],
+    stats: { added: 0, removed: 0 },
+    changes: [],
+  })),
 );
+const selectedCommit = computed(() => commits.value.find((commit) => commit.id === selectedCommitId.value));
+
+const loadHistory = async () => {
+  if (typeof route.params.repositoryId !== 'string' || !window.gitwitanRepositories) return;
+  const overview = await window.gitwitanRepositories.overview(route.params.repositoryId);
+  entries.value = overview.history;
+  selectedCommitId.value = overview.history[0]?.id ?? '';
+};
+
+onMounted(() => void loadHistory());
+watch(() => route.params.repositoryId, () => void loadHistory());
 </script>
 
 <style scoped>
-.history-view-splitter {
-  flex: 1 1 auto;
-  width: 100%;
-  height: 100%;
-  min-height: 0;
-}
-
-.history-view-splitter :deep(.q-splitter__before),
-.history-view-splitter :deep(.q-splitter__after) {
-  min-width: 0;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.history-view-splitter :deep(.q-splitter__separator) {
-  height: 1px;
-  background: var(--app-border);
-}
-
-.history-view-splitter :deep(.q-splitter__separator:hover) {
-  background: var(--app-border-strong);
-}
+.history-view-splitter { flex: 1 1 auto; width: 100%; height: 100%; min-height: 0; }
+.history-view-splitter :deep(.q-splitter__before), .history-view-splitter :deep(.q-splitter__after) { min-width: 0; min-height: 0; overflow: hidden; }
+.history-view-splitter :deep(.q-splitter__separator) { height: 1px; background: var(--app-border); }
+.history-empty { display: grid; height: 100%; place-items: center; color: var(--app-text-muted); background: var(--app-surface); }
 </style>

@@ -40,3 +40,37 @@ export type RepositoryRecord = {
   summary: RepositorySummary | undefined;
   error: string | undefined;
 };
+
+
+export type RepositoryBranch = {
+  name: string;
+  isCurrent: boolean;
+};
+
+export type RepositoryRemoteBranch = {
+  remote: string;
+  name: string;
+};
+
+export type RepositoryStash = {
+  id: string;
+  message: string;
+};
+
+export type RepositoryHistoryEntry = {
+  id: string;
+  shortId: string;
+  parents: string[];
+  author: string;
+  committer: string;
+  committedAt: string;
+  message: string;
+};
+
+export type RepositoryWorkspaceOverview = {
+  repositoryId: string;
+  branches: RepositoryBranch[];
+  remoteBranches: RepositoryRemoteBranch[];
+  stashes: RepositoryStash[];
+  history: RepositoryHistoryEntry[];
+};
