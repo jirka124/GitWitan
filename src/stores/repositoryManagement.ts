@@ -56,6 +56,26 @@ export const useRepositoryManagementStore = defineStore('repositoryManagement', 
       else this.repositories.splice(index, 1, repository);
     },
 
+    async clone(repositoryUrl: string, parentFolder: string, folderName: string) {
+      if (!window.gitwitanRepositories) {
+        this.error = 'Repository cloning is available only in the Electron app.';
+        return undefined;
+      }
+
+      this.isLoading = true;
+      this.error = undefined;
+      try {
+        const record = await window.gitwitanRepositories.clone(repositoryUrl, parentFolder, folderName);
+        this.applyRecord(record);
+        return record.repository.id;
+      } catch (error: unknown) {
+        this.error = error instanceof Error ? error.message : 'Unable to clone repository.';
+        return undefined;
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
     async openAddExistingRepositoryPicker() {
       const selectedPath = await window.gitwitanShell?.selectFolder?.();
       if (!selectedPath) return undefined;

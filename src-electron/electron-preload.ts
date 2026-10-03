@@ -48,6 +48,8 @@ contextBridge.exposeInMainWorld('gitwitanRepositories', {
   list: () => ipcRenderer.invoke('gitwitan:repositories:list'),
   addExisting: (folderPath: string) =>
     ipcRenderer.invoke('gitwitan:repositories:add-existing', folderPath),
+  clone: (repositoryUrl: string, parentFolder: string, folderName: string) =>
+    ipcRenderer.invoke('gitwitan:repositories:clone', repositoryUrl, parentFolder, folderName),
   refresh: (repositoryId: string) => ipcRenderer.invoke('gitwitan:repositories:refresh', repositoryId),
   status: (repositoryId: string) => ipcRenderer.invoke('gitwitan:repositories:status', repositoryId),
   overview: (repositoryId: string) => ipcRenderer.invoke('gitwitan:repositories:overview', repositoryId),

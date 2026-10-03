@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <q-toolbar class="app-workbar">
     <RepositoryManagementTrigger
       :active="isRepositoryManagementRoute"
@@ -21,7 +21,7 @@
       @toggle-theme="$emit('toggle-theme')"
     />
 
-    <RepositoryCloneDialog @clone="$emit('clone', $event)" />
+    <RepositoryCloneDialog @clone="cloneRepository" />
 
     <RepositoryFetchDialog @fetch="$emit('fetch', $event)" />
 
@@ -50,6 +50,7 @@ import RepositoryPushDialog from '../repository/dialogs/RepositoryPushDialog.vue
 import RepositoryMergeDialog from '../repository/dialogs/RepositoryMergeDialog.vue';
 import RepositoryStashDialog from '../repository/dialogs/RepositoryStashDialog.vue';
 import { useRepositoryManagementStore } from '../../stores/repositoryManagement';
+import { useRepositorySessionStore } from '../../stores/repositorySession';
 import type {
   CloneDialogPayload,
   FetchDialogPayload,
@@ -77,9 +78,23 @@ defineEmits<{
 const route = useRoute();
 const router = useRouter();
 const repositoryManagementStore = useRepositoryManagementStore();
+const repositorySessionStore = useRepositorySessionStore();
 
 const isRepositoryManagementRoute = computed(() => route.path === '/');
 const managedRepositoryCount = computed(() => repositoryManagementStore.repositoryCount);
+
+const cloneRepository = async (payload: CloneDialogPayload) => {
+  const repositoryId = await repositoryManagementStore.clone(
+    payload.repositoryUrl,
+    payload.parentFolder,
+    payload.folderName,
+  );
+
+  if (repositoryId) {
+    repositorySessionStore.open(repositoryId);
+    await router.push({ name: 'repository-workspace', params: { repositoryId } });
+  }
+};
 
 const openRepositoryManagement = () => {
   if (!isRepositoryManagementRoute.value) {

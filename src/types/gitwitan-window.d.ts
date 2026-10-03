@@ -5,6 +5,7 @@ declare global {
     gitwitanRepositories?: {
       list: () => Promise<RepositoryRecord[]>;
       addExisting: (folderPath: string) => Promise<RepositoryRecord>;
+      clone: (repositoryUrl: string, parentFolder: string, folderName: string) => Promise<RepositoryRecord>;
       refresh: (repositoryId: string) => Promise<RepositoryRecord>;
       status: (repositoryId: string) => Promise<RepositoryStatus>;
       overview: (repositoryId: string) => Promise<RepositoryWorkspaceOverview>;

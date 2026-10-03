@@ -217,6 +217,26 @@ ipcMain.handle('gitwitan:repositories:list', async () =>
   Promise.all((await repositoryRegistry.list()).map(toRepositoryRecord)),
 );
 
+ipcMain.handle(
+  'gitwitan:repositories:clone',
+  async (_event, repositoryUrl: string, parentFolder: string, folderName: string) => {
+    const normalizedParent = path.resolve(parentFolder);
+    const targetPath = path.resolve(normalizedParent, folderName);
+
+    if (
+      !folderName ||
+      path.basename(folderName) !== folderName ||
+      path.dirname(targetPath) !== normalizedParent
+    ) {
+      throw new Error('Clone folder name must be a single folder name.');
+    }
+
+    await gitRepositoryService.clone(repositoryUrl, targetPath);
+    const rootPath = await gitRepositoryService.resolveRoot(targetPath);
+    return toRepositoryRecord(await repositoryRegistry.track(rootPath, path.basename(rootPath)));
+  },
+);
+
 ipcMain.handle('gitwitan:repositories:add-existing', async (_event, folderPath: string) => {
   const rootPath = await gitRepositoryService.resolveRoot(folderPath);
   const repository = await repositoryRegistry.track(rootPath, path.basename(rootPath));

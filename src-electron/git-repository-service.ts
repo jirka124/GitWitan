@@ -17,6 +17,13 @@ export class GitRepositoryService {
     return (await this.git(folderPath, ['rev-parse', '--show-toplevel'])).trim();
   }
 
+  async clone(repositoryUrl: string, targetPath: string) {
+    await executeFile('git', ['clone', repositoryUrl, targetPath], {
+      windowsHide: true,
+      maxBuffer: 1024 * 1024,
+    });
+  }
+
   async readSummary(repositoryId: string, rootPath: string): Promise<RepositorySummary> {
     const [branch, status, remotes, commitCount, lastCommitAt] = await Promise.all([
       this.git(rootPath, ['branch', '--show-current']).then((value) => value.trim() || undefined),
