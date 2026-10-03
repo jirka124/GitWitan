@@ -119,16 +119,26 @@ const selectChange = async (area: ChangeArea, node: ChangeTreeNode) => {
   }
 };
 
-const requestChangeAction = async (action: ChangeAction, node: ChangeTreeNode) => {
-  if (node.children?.length || typeof route.params.repositoryId !== 'string') return;
+const collectFilePaths = (node: ChangeTreeNode): string[] => {
+  if (!node.children?.length) {
+    return node.caption ? [node.caption] : [];
+  }
 
-  const filePath = node.caption ?? node.label;
-  if (action === 'stage') await workspaceStore.stage(route.params.repositoryId, filePath);
-  else await workspaceStore.unstage(route.params.repositoryId, filePath);
+  return node.children.flatMap(collectFilePaths);
+};
+
+const requestChangeAction = async (action: ChangeAction, node: ChangeTreeNode) => {
+  if (typeof route.params.repositoryId !== 'string') return;
+
+  const filePaths = [...new Set(collectFilePaths(node))];
+  if (!filePaths.length) return;
+
+  if (action === 'stage') await workspaceStore.stage(route.params.repositoryId, filePaths);
+  else await workspaceStore.unstage(route.params.repositoryId, filePaths);
 
   activeChange.value = undefined;
   diffContent.value = '';
-}
+};
 </script>
 
 <style scoped>

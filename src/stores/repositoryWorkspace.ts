@@ -88,26 +88,26 @@ export const useRepositoryWorkspaceStore = defineStore('repositoryWorkspace', {
       }
     },
 
-    async stage(repositoryId: string, filePath: string) {
-      await this.runChangeAction(repositoryId, filePath, 'stage');
+    async stage(repositoryId: string, filePaths: string[]) {
+      await this.runChangeAction(repositoryId, filePaths, 'stage');
     },
 
-    async unstage(repositoryId: string, filePath: string) {
-      await this.runChangeAction(repositoryId, filePath, 'unstage');
+    async unstage(repositoryId: string, filePaths: string[]) {
+      await this.runChangeAction(repositoryId, filePaths, 'unstage');
     },
 
-    async runChangeAction(repositoryId: string, filePath: string, action: 'stage' | 'unstage') {
+    async runChangeAction(repositoryId: string, filePaths: string[], action: 'stage' | 'unstage') {
       if (!window.gitwitanRepositories) return;
 
       this.isLoading = true;
       this.error = undefined;
       try {
-        if (action === 'stage') await window.gitwitanRepositories.stage(repositoryId, [filePath]);
-        else await window.gitwitanRepositories.unstage(repositoryId, [filePath]);
+        if (action === 'stage') await window.gitwitanRepositories.stage(repositoryId, filePaths);
+        else await window.gitwitanRepositories.unstage(repositoryId, filePaths);
 
         await this.load(repositoryId);
       } catch (error: unknown) {
-        this.error = error instanceof Error ? error.message : `Unable to ${action} file.`;
+        this.error = error instanceof Error ? error.message : `Unable to ${action} files.`;
       } finally {
         this.isLoading = false;
       }
