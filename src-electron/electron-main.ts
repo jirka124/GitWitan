@@ -132,6 +132,18 @@ ipcMain.handle('gitwitan:repositories:status', async (_event, repositoryId: stri
   return gitRepositoryService.readStatus(repositoryId, repository.path);
 });
 
+ipcMain.handle(
+  'gitwitan:repositories:diff',
+  async (_event, repositoryId: string, filePath: string, staged: boolean) => {
+    const repository = (await repositoryRegistry.list()).find((item) => item.id === repositoryId);
+    if (!repository) {
+      throw new Error('Tracked repository was not found.');
+    }
+
+    return gitRepositoryService.readDiff(repository.path, filePath, staged);
+  },
+);
+
 ipcMain.on('gitwitan:set-window-theme', (event, theme: WindowTheme) => {
   const window = BrowserWindow.fromWebContents(event.sender);
 

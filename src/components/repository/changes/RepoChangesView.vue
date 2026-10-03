@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <q-resize-observer @resize="onResize" />
   <q-splitter
     v-model="changesPreviewSplitter"
@@ -36,7 +36,7 @@
     </template>
 
     <template #after>
-      <DiffPreviewPanel :active-change="activeChange" />
+      <DiffPreviewPanel :active-change="activeChange" :diff-content="diffContent" :is-loading="isLoadingDiff" />
     </template>
   </q-splitter>
 
@@ -50,6 +50,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
+import { useRoute } from 'vue-router';
 import { useQuasar } from 'quasar';
 import type { ChangeTreeNode } from '../../../types/repository';
 import ChangedFilesPanel from './ChangedFilesPanel.vue';
@@ -72,12 +73,15 @@ defineProps<{
 }>();
 
 const $q = useQuasar();
+const route = useRoute();
 const changesViewBox = ref({ width: 100, height: 100 });
 const changesPreviewSplitter = ref(200);
 const commitSubject = ref('');
 const commitDescription = ref('');
 const amendCommit = ref(false);
 const activeChange = ref<ActiveChange>();
+const diffContent = ref('');
+const isLoadingDiff = ref(false);
 
 const changesPreviewSplitterLimits = computed<[number, number]>(() => [
   200,
@@ -88,13 +92,29 @@ const onResize = (size: { width: number; height: number }) => {
   changesViewBox.value = size;
 };
 
-const selectChange = (area: ChangeArea, node: ChangeTreeNode) => {
+const selectChange = async (area: ChangeArea, node: ChangeTreeNode) => {
   activeChange.value = { area, node };
+  diffContent.value = '';
+  isLoadingDiff.value = true;
+
+  const repositoryId = typeof route.params.repositoryId === 'string' ? route.params.repositoryId : undefined;
+  const filePath = node.caption ?? node.label;
+
+  try {
+    diffContent.value =
+      repositoryId && window.gitwitanRepositories
+        ? await window.gitwitanRepositories.diff(repositoryId, filePath, area === 'staged')
+        : '';
+  } catch (error: unknown) {
+    diffContent.value = error instanceof Error ? error.message : 'Unable to load diff.';
+  } finally {
+    isLoadingDiff.value = false;
+  }
 };
 
 const requestChangeAction = (action: ChangeAction, node: ChangeTreeNode) => {
   if (!node.children?.length) {
-    activeChange.value = { area: action === 'stage' ? 'unstaged' : 'staged', node };
+    void selectChange(action === 'stage' ? 'unstaged' : 'staged', node);
   }
 };
 </script>

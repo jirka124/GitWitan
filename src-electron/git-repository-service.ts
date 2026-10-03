@@ -43,6 +43,13 @@ export class GitRepositoryService {
     return parseStatus(repositoryId, await this.git(rootPath, ['status', '--porcelain=v1']));
   }
 
+  async readDiff(rootPath: string, filePath: string, staged: boolean) {
+    return this.git(
+      rootPath,
+      staged ? ['diff', '--cached', '--', filePath] : ['diff', '--', filePath],
+    );
+  }
+
   private async readRemotes(rootPath: string): Promise<RepositoryRemote[]> {
     const names = (await this.git(rootPath, ['remote']))
       .split(/\r?\n/)

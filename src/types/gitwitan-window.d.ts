@@ -7,6 +7,7 @@ declare global {
       addExisting: (folderPath: string) => Promise<RepositoryRecord>;
       refresh: (repositoryId: string) => Promise<RepositoryRecord>;
       status: (repositoryId: string) => Promise<RepositoryStatus>;
+      diff: (repositoryId: string, filePath: string, staged: boolean) => Promise<string>;
     };
   }
 }

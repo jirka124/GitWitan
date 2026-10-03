@@ -30,11 +30,9 @@
         </span>
       </header>
 
-      <div class="diff-preview-placeholder">
-        <div class="diff-line diff-line-context">@@ example preview @@</div>
-        <div class="diff-line diff-line-removed">- previous content will render here</div>
-        <div class="diff-line diff-line-added">+ changed content will render here</div>
-      </div>
+      <pre class="diff-preview-placeholder">{{
+        isLoading ? 'Loading diff&' : diffContent || 'No textual diff is available for this file.'
+      }}</pre>
     </div>
   </section>
 </template>
@@ -50,6 +48,8 @@ type ActiveChange = {
 
 const props = defineProps<{
   activeChange?: ActiveChange | undefined;
+  diffContent: string;
+  isLoading: boolean;
 }>();
 
 const subtitle = computed(() => {
