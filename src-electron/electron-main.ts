@@ -147,3 +147,42 @@ app.on('window-all-closed', () => {
     app.quit();
   }
 });
+import type { RepositoryRecord, TrackedRepository } from '../src/types/repository-data';
+import { GitRepositoryService } from './git-repository-service';
+import { RepositoryRegistry } from './repository-registry';
+const repositoryRegistry = new RepositoryRegistry(path.join(app.getPath('userData'), 'repositories.json'));
+const gitRepositoryService = new GitRepositoryService();
+
+const toRepositoryRecord = async (repository: TrackedRepository): Promise<RepositoryRecord> => {
+  try {
+    return {
+      repository,
+      summary: await gitRepositoryService.readSummary(repository.id, repository.path),
+      error: undefined,
+    };
+  } catch (error: unknown) {
+    return {
+      repository,
+      summary: undefined,
+      error: error instanceof Error ? error.message : 'Unable to inspect repository.',
+    };
+  }
+};
+ipcMain.handle('gitwitan:repositories:list', async () =>
+  Promise.all((await repositoryRegistry.list()).map(toRepositoryRecord)),
+);
+
+ipcMain.handle('gitwitan:repositories:add-existing', async (_event, folderPath: string) => {
+  const rootPath = await gitRepositoryService.resolveRoot(folderPath);
+  const repository = await repositoryRegistry.track(rootPath, path.basename(rootPath));
+  return toRepositoryRecord(repository);
+});
+
+ipcMain.handle('gitwitan:repositories:refresh', async (_event, repositoryId: string) => {
+  const repository = (await repositoryRegistry.list()).find((item) => item.id === repositoryId);
+  if (!repository) {
+    throw new Error('Tracked repository was not found.');
+  }
+
+  return toRepositoryRecord(repository);
+});

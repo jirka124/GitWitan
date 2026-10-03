@@ -42,3 +42,11 @@ contextBridge.exposeInMainWorld('gitwitanShell', {
   openExternal: (url: string) => ipcRenderer.invoke('gitwitan:open-external-url', url),
   selectFolder: (defaultPath?: string) => ipcRenderer.invoke('gitwitan:select-folder', defaultPath),
 });
+
+
+contextBridge.exposeInMainWorld('gitwitanRepositories', {
+  list: () => ipcRenderer.invoke('gitwitan:repositories:list'),
+  addExisting: (folderPath: string) =>
+    ipcRenderer.invoke('gitwitan:repositories:add-existing', folderPath),
+  refresh: (repositoryId: string) => ipcRenderer.invoke('gitwitan:repositories:refresh', repositoryId),
+});
