@@ -6,10 +6,13 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/layouts/MainLayout.vue'),
     children: [
       { path: '', component: () => import('@/pages/RepositoryManagementPage.vue') },
-      { path: 'repository', component: () => import('@/pages/RepositoryWorkspacePage.vue') },
+      {
+        path: 'repository/:repositoryId',
+        name: 'repository-workspace',
+        component: () => import('@/pages/RepositoryWorkspacePage.vue'),
+      },
     ],
   },
-
   {
     path: '/:catchAll(.*)*',
     component: () => import('@/pages/ErrorNotFound.vue'),

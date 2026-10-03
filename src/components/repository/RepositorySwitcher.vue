@@ -4,9 +4,9 @@
       v-for="repository in openRepositories"
       :key="repository.key"
       class="repository-switcher-item"
-      :class="{ 'repository-switcher-item-active': repository.route === route.path }"
+      :class="{ 'repository-switcher-item-active': repository.key === activeRepositoryId }"
       type="button"
-      @click="openRepository(repository.route)"
+      @click="openRepository(repository.key)"
     >
       <span>{{ repository.name }}</span>
     </button>
@@ -23,31 +23,42 @@
 </template>
 
 <script setup lang="ts">
+import { computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-
-type OpenRepositoryTab = {
-  key: string;
-  name: string;
-  route: string;
-};
+import { useRepositoryManagementStore } from '../../stores/repositoryManagement';
+import { useRepositorySessionStore } from '../../stores/repositorySession';
 
 const route = useRoute();
 const router = useRouter();
+const repositoryManagementStore = useRepositoryManagementStore();
+const repositorySessionStore = useRepositorySessionStore();
 
-const openRepositories: OpenRepositoryTab[] = [
-  {
-    key: 'gitwitan',
-    name: 'GitWitan',
-    route: '/repository',
-  },
-];
+const activeRepositoryId = computed(() =>
+  typeof route.params.repositoryId === 'string' ? route.params.repositoryId : undefined,
+);
+const openRepositories = computed(() =>
+  repositorySessionStore.openRepositoryIds
+    .map((repositoryId) =>
+      repositoryManagementStore.repositories.find((repository) => repository.key === repositoryId),
+    )
+    .filter((repository) => repository !== undefined),
+);
+
+onMounted(async () => {
+  await repositoryManagementStore.load();
+
+  if (activeRepositoryId.value) {
+    repositorySessionStore.open(activeRepositoryId.value);
+  }
+});
 
 const openRepositoryManagement = () => {
   void router.push('/');
 };
 
-const openRepository = (repositoryRoute: string) => {
-  void router.push(repositoryRoute);
+const openRepository = (repositoryId: string) => {
+  repositorySessionStore.open(repositoryId);
+  void router.push({ name: 'repository-workspace', params: { repositoryId } });
 };
 </script>
 

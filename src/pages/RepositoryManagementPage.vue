@@ -14,9 +14,11 @@ import { computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import RepositoryManagementView from '../components/repository/RepositoryManagementView.vue';
 import RepositorySwitcher from '../components/repository/RepositorySwitcher.vue';
+import { useRepositorySessionStore } from '../stores/repositorySession';
 
 const route = useRoute();
 const router = useRouter();
+const repositorySessionStore = useRepositorySessionStore();
 
 const canGoBack = computed(() => {
   void route.fullPath;
@@ -27,8 +29,9 @@ const goBack = () => {
   router.back();
 };
 
-const openRepository = () => {
-  void router.push('/repository');
+const openRepository = (repositoryId: string) => {
+  repositorySessionStore.open(repositoryId);
+  void router.push({ name: 'repository-workspace', params: { repositoryId } });
 };
 </script>
 
