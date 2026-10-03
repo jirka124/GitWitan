@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <section class="repository-management-view" aria-label="Repository management">
     <RepositoryManagementHeader
       :can-go-back="canGoBack"
@@ -43,7 +43,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useQuasar } from 'quasar';
 import { useRepositoryCommandDialogsStore } from '../../stores/repositoryCommandDialogs';
 import { useRepositoryManagementStore } from '../../stores/repositoryManagement';
@@ -68,6 +68,9 @@ const emit = defineEmits<{
 const $q = useQuasar();
 const dialogsStore = useRepositoryCommandDialogsStore();
 const repositoryManagementStore = useRepositoryManagementStore();
+onMounted(() => {
+  void repositoryManagementStore.load();
+});
 const repositories = computed(() => repositoryManagementStore.repositories);
 const fallbackRepository = managedRepositories[0] as ManagedRepository;
 const activeRepositoryKey = ref(fallbackRepository.key);
@@ -119,7 +122,7 @@ const selectTrackedRepository = (repositoryKey: string | undefined) => {
 };
 
 const openInitRepositoryPicker = async () => {
-  selectTrackedRepository(await repositoryManagementStore.openInitRepositoryPicker());
+  await openAddExistingRepositoryPicker();
 };
 
 const openAddExistingRepositoryPicker = async () => {

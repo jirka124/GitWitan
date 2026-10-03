@@ -1,63 +1,32 @@
-﻿import { defineStore } from 'pinia';
-import { managedRepositories } from '../components/repository/management/repository-management.mock';
+import { defineStore } from 'pinia';
 import type { ManagedRepository } from '../components/repository/management/repository-management.types';
+import type { RepositoryRecord } from '../types/repository-data';
 
-const normalizePath = (folderPath: string) => folderPath.replace(/\\/g, '/').replace(/\/+$/, '');
-
-const getFolderName = (folderPath: string) => {
-  const normalizedPath = normalizePath(folderPath);
-  return normalizedPath.split('/').filter(Boolean).at(-1) ?? 'Repository';
-};
-
-const toTitle = (value: string) =>
-  value
-    .replace(/[-_]+/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .replace(/\b\w/g, (character) => character.toLocaleUpperCase());
-
-const toRepositoryKey = (folderName: string) =>
-  folderName
-    .toLocaleLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '') || 'repository';
-
-const createUniqueKey = (baseKey: string, repositories: ManagedRepository[]) => {
-  let candidateKey = baseKey;
-  let suffix = 2;
-
-  while (repositories.some((repository) => repository.key === candidateKey)) {
-    candidateKey = `${baseKey}-${suffix}`;
-    suffix += 1;
-  }
-
-  return candidateKey;
-};
-
-const createTrackedRepository = (
-  folderPath: string,
-  repositories: ManagedRepository[],
-): ManagedRepository => {
-  const normalizedPath = normalizePath(folderPath);
-  const folderName = getFolderName(normalizedPath);
-  const key = createUniqueKey(toRepositoryKey(folderName), repositories);
-
-  return {
-    key,
-    name: toTitle(folderName),
-    path: normalizedPath,
-    icon: 'folder_special',
-    dirtyCount: 0,
-    lastFetch: 'Never',
-    commitCount: 'Unknown',
-    lastCommit: 'Unknown',
-    remotes: [],
-  };
-};
+const toManagedRepository = (record: RepositoryRecord): ManagedRepository => ({
+  key: record.repository.id,
+  name: record.repository.displayName,
+  path: record.repository.path,
+  icon: record.repository.icon,
+  dirtyCount: record.summary?.dirtyCount ?? 0,
+  lastFetch: record.summary ? 'Not fetched' : 'Unavailable',
+  commitCount: record.summary?.commitCount?.toString() ?? 'Unknown',
+  lastCommit: record.summary?.lastCommitAt
+    ? new Date(record.summary.lastCommitAt).toLocaleString()
+    : 'Unknown',
+  remotes: (record.summary?.remotes ?? []).map((remote) => ({
+    name: remote.name,
+    href: remote.url,
+    status: 'available',
+    tone: 'ok',
+    lastFetch: 'Not fetched',
+  })),
+});
 
 export const useRepositoryManagementStore = defineStore('repositoryManagement', {
   state: () => ({
-    repositories: managedRepositories.map((repository) => ({ ...repository })),
+    repositories: [] as ManagedRepository[],
+    isLoading: false,
+    error: undefined as string | undefined,
   }),
 
   getters: {
@@ -65,40 +34,55 @@ export const useRepositoryManagementStore = defineStore('repositoryManagement', 
   },
 
   actions: {
-    addTrackedRepository(folderPath: string) {
-      const normalizedPath = normalizePath(folderPath);
-      const existingRepository = this.repositories.find(
-        (repository) =>
-          normalizePath(repository.path).toLocaleLowerCase() === normalizedPath.toLocaleLowerCase(),
-      );
+    async load() {
+      if (!window.gitwitanRepositories) return;
 
-      if (existingRepository) {
-        return existingRepository.key;
+      this.isLoading = true;
+      this.error = undefined;
+      try {
+        this.repositories = (await window.gitwitanRepositories.list()).map(toManagedRepository);
+      } catch (error: unknown) {
+        this.error = error instanceof Error ? error.message : 'Unable to load repositories.';
+      } finally {
+        this.isLoading = false;
       }
-
-      const repository = createTrackedRepository(normalizedPath, this.repositories);
-      this.repositories.unshift(repository);
-      return repository.key;
     },
 
-    async openInitRepositoryPicker() {
-      const selectedPath = await window.gitwitanShell?.selectFolder?.();
+    applyRecord(record: RepositoryRecord) {
+      const repository = toManagedRepository(record);
+      const index = this.repositories.findIndex((item) => item.key === repository.key);
 
-      if (!selectedPath) {
-        return undefined;
-      }
-
-      return this.addTrackedRepository(selectedPath);
+      if (index === -1) this.repositories.unshift(repository);
+      else this.repositories.splice(index, 1, repository);
     },
 
     async openAddExistingRepositoryPicker() {
       const selectedPath = await window.gitwitanShell?.selectFolder?.();
+      if (!selectedPath) return undefined;
 
-      if (!selectedPath) {
+      if (!window.gitwitanRepositories) {
+        this.error = 'Repository tracking is available only in the Electron app.';
         return undefined;
       }
 
-      return this.addTrackedRepository(selectedPath);
+      try {
+        const record = await window.gitwitanRepositories.addExisting(selectedPath);
+        this.applyRecord(record);
+        return record.repository.id;
+      } catch (error: unknown) {
+        this.error = error instanceof Error ? error.message : 'Selected folder is not a Git repository.';
+        return undefined;
+      }
+    },
+
+    async refresh(repositoryId: string) {
+      if (!window.gitwitanRepositories) return;
+
+      try {
+        this.applyRecord(await window.gitwitanRepositories.refresh(repositoryId));
+      } catch (error: unknown) {
+        this.error = error instanceof Error ? error.message : 'Unable to refresh repository.';
+      }
     },
   },
 });
