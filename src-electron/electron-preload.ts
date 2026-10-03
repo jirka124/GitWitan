@@ -54,8 +54,8 @@ contextBridge.exposeInMainWorld('gitwitanRepositories', {
   refresh: (repositoryId: string) => ipcRenderer.invoke('gitwitan:repositories:refresh', repositoryId),
   status: (repositoryId: string) => ipcRenderer.invoke('gitwitan:repositories:status', repositoryId),
   overview: (repositoryId: string) => ipcRenderer.invoke('gitwitan:repositories:overview', repositoryId),
-  diff: (repositoryId: string, filePath: string, staged: boolean) =>
-    ipcRenderer.invoke('gitwitan:repositories:diff', repositoryId, filePath, staged),
+  diff: (repositoryId: string, filePath: string, staged: boolean, untracked: boolean) =>
+    ipcRenderer.invoke('gitwitan:repositories:diff', repositoryId, filePath, staged, untracked),
   stage: (repositoryId: string, filePaths: string[]) =>
     ipcRenderer.invoke('gitwitan:repositories:stage', repositoryId, filePaths),
   unstage: (repositoryId: string, filePaths: string[]) =>

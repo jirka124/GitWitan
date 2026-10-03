@@ -105,7 +105,12 @@ const selectChange = async (area: ChangeArea, node: ChangeTreeNode) => {
   try {
     diffContent.value =
       repositoryId && window.gitwitanRepositories
-        ? await window.gitwitanRepositories.diff(repositoryId, filePath, area === 'staged')
+        ? await window.gitwitanRepositories.diff(
+            repositoryId,
+            filePath,
+            area === 'staged',
+            node.status === 'untracked',
+          )
         : '';
   } catch (error: unknown) {
     diffContent.value = error instanceof Error ? error.message : 'Unable to load diff.';

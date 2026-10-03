@@ -2,24 +2,62 @@ import { defineStore } from 'pinia';
 import type { ChangeTreeNode } from '../types/repository';
 import type { RepositoryChangedFile } from '../types/repository-data';
 
-const toTree = (files: RepositoryChangedFile[], area: 'staged' | 'unstaged'): ChangeTreeNode[] =>
-  files.map((file) => ({
-    key: `${area}:${file.path}`,
-    label: file.path.split('/').at(-1) ?? file.path,
-    caption: file.path,
-    icon: 'description',
-    status: file.kind,
-    badge:
-      file.kind === 'modified'
-        ? 'M'
-        : file.kind === 'added'
-          ? 'A'
-          : file.kind === 'deleted'
-            ? 'D'
-            : file.kind === 'renamed'
-              ? 'R'
-              : 'U',
-  }));
+const statusBadge = (kind: RepositoryChangedFile['kind']) =>
+  kind === 'modified'
+    ? 'M'
+    : kind === 'added'
+      ? 'A'
+      : kind === 'deleted'
+        ? 'D'
+        : kind === 'renamed'
+          ? 'R'
+          : 'U';
+
+const toTree = (files: RepositoryChangedFile[], area: 'staged' | 'unstaged'): ChangeTreeNode[] => {
+  const roots: ChangeTreeNode[] = [];
+  const folders = new Map<string, ChangeTreeNode>();
+
+  for (const file of files) {
+    const path = file.path.replace(/\\/g, '/');
+    const segments = path.split('/').filter(Boolean);
+    const fileName = segments.pop();
+
+    if (!fileName) continue;
+
+    let children = roots;
+    let folderPath = '';
+
+    for (const folderName of segments) {
+      folderPath = folderPath ? `${folderPath}/${folderName}` : folderName;
+      const folderKey = `${area}:folder:${folderPath}`;
+      let folder = folders.get(folderKey);
+
+      if (!folder) {
+        folder = {
+          key: folderKey,
+          label: folderName,
+          icon: 'folder',
+          children: [],
+        };
+        folders.set(folderKey, folder);
+        children.push(folder);
+      }
+
+      children = folder.children as ChangeTreeNode[];
+    }
+
+    children.push({
+      key: `${area}:file:${path}`,
+      label: fileName,
+      caption: path,
+      icon: 'description',
+      status: file.kind,
+      badge: statusBadge(file.kind),
+    });
+  }
+
+  return roots;
+};
 
 export const useRepositoryWorkspaceStore = defineStore('repositoryWorkspace', {
   state: () => ({

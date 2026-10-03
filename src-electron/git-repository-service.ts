@@ -56,10 +56,19 @@ export class GitRepositoryService {
   }
 
   async readStatus(repositoryId: string, rootPath: string): Promise<RepositoryStatus> {
-    return parseStatus(repositoryId, await this.git(rootPath, ['status', '--porcelain=v1']));
+    const [statusOutput, untrackedOutput] = await Promise.all([
+      this.git(rootPath, ['status', '--porcelain=v1']),
+      this.git(rootPath, ['ls-files', '--others', '--exclude-standard', '-z']),
+    ]);
+
+    return parseStatus(repositoryId, statusOutput, untrackedOutput.split('\0').filter(Boolean));
   }
 
-  async readDiff(rootPath: string, filePath: string, staged: boolean) {
+  async readDiff(rootPath: string, filePath: string, staged: boolean, untracked: boolean) {
+    if (untracked) {
+      return this.gitAllowNonZeroExit(rootPath, ['diff', '--no-index', '--', '/dev/null', filePath]);
+    }
+
     return this.git(
       rootPath,
       staged ? ['diff', '--cached', '--', filePath] : ['diff', '--', filePath],
@@ -149,6 +158,18 @@ export class GitRepositoryService {
     );
   }
 
+  private async gitAllowNonZeroExit(workingDirectory: string, arguments_: string[]) {
+    try {
+      return await this.git(workingDirectory, arguments_);
+    } catch (error: unknown) {
+      if (typeof error === 'object' && error !== null && 'stdout' in error) {
+        const { stdout } = error as { stdout?: unknown };
+        if (typeof stdout === 'string') return stdout;
+      }
+      throw error;
+    }
+  }
+
   private async git(workingDirectory: string, arguments_: string[]) {
     const { stdout } = await executeFile('git', ['-C', workingDirectory, ...arguments_], {
       windowsHide: true,
@@ -158,7 +179,11 @@ export class GitRepositoryService {
   }
 }
 
-function parseStatus(repositoryId: string, output: string): RepositoryStatus {
+function parseStatus(
+  repositoryId: string,
+  output: string,
+  untrackedPaths: string[],
+): RepositoryStatus {
   const staged: RepositoryChangedFile[] = [];
   const unstaged: RepositoryChangedFile[] = [];
 
@@ -170,15 +195,18 @@ function parseStatus(repositoryId: string, output: string): RepositoryStatus {
     const filePath = line.slice(3);
 
     if (!filePath) continue;
+    if (indexStatus === '?' && workTreeStatus === '?') continue;
+
     if (indexStatus !== ' ' && indexStatus !== '?') {
       staged.push({ path: filePath, kind: toChangeKind(indexStatus) });
     }
     if (workTreeStatus !== ' ') {
       unstaged.push({ path: filePath, kind: toChangeKind(workTreeStatus) });
     }
-    if (indexStatus === '?' && workTreeStatus === '?') {
-      unstaged.push({ path: filePath, kind: 'untracked' });
-    }
+  }
+
+  for (const path of untrackedPaths) {
+    unstaged.push({ path, kind: 'untracked' });
   }
 
   return { repositoryId, staged, unstaged };

@@ -10,7 +10,7 @@ declare global {
       refresh: (repositoryId: string) => Promise<RepositoryRecord>;
       status: (repositoryId: string) => Promise<RepositoryStatus>;
       overview: (repositoryId: string) => Promise<RepositoryWorkspaceOverview>;
-      diff: (repositoryId: string, filePath: string, staged: boolean) => Promise<string>;
+      diff: (repositoryId: string, filePath: string, staged: boolean, untracked: boolean) => Promise<string>;
       stage: (repositoryId: string, filePaths: string[]) => Promise<void>;
       unstage: (repositoryId: string, filePaths: string[]) => Promise<void>;
     };

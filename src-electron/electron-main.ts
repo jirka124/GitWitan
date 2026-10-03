@@ -134,13 +134,13 @@ ipcMain.handle('gitwitan:repositories:status', async (_event, repositoryId: stri
 
 ipcMain.handle(
   'gitwitan:repositories:diff',
-  async (_event, repositoryId: string, filePath: string, staged: boolean) => {
+  async (_event, repositoryId: string, filePath: string, staged: boolean, untracked: boolean) => {
     const repository = (await repositoryRegistry.list()).find((item) => item.id === repositoryId);
     if (!repository) {
       throw new Error('Tracked repository was not found.');
     }
 
-    return gitRepositoryService.readDiff(repository.path, filePath, staged);
+    return gitRepositoryService.readDiff(repository.path, filePath, staged, untracked);
   },
 );
 
