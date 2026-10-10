@@ -38,8 +38,10 @@ defineProps<{
 }
 
 .history-ref-head {
-  color: var(--app-accent);
-  border-color: color-mix(in srgb, var(--app-accent) 40%, transparent);
+  color: var(--app-bg);
+  font-weight: 800;
+  background: var(--app-accent);
+  border-color: var(--app-accent);
 }
 
 .history-ref-local {

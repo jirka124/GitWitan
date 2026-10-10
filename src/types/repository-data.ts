@@ -65,6 +65,27 @@ export type RepositoryHistoryEntry = {
   committer: string;
   committedAt: string;
   message: string;
+  body: string;
+  refs: RepositoryCommitRef[];
+  stats: RepositoryCommitStats;
+  changes: RepositoryCommitChange[];
+};
+
+export type RepositoryCommitRef = {
+  label: string;
+  type: 'local' | 'origin' | 'tag' | 'head';
+};
+
+export type RepositoryCommitStats = {
+  added: number;
+  removed: number;
+};
+
+export type RepositoryCommitChange = {
+  path: string;
+  kind: Exclude<RepositoryChangeKind, 'untracked'>;
+  added: number;
+  removed: number;
 };
 
 export type RepositoryWorkspaceOverview = {

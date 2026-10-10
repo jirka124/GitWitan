@@ -1,10 +1,7 @@
 ﻿<template>
   <section class="history-detail-panel" aria-label="Selected commit details">
     <header class="history-detail-header">
-      <div>
-        <div class="history-detail-title">Commit Details</div>
-        <h1>{{ commit.message }}</h1>
-      </div>
+      <h1>{{ commit.message }}</h1>
       <span class="history-detail-id">{{ commit.shortId }}</span>
     </header>
 
@@ -27,6 +24,8 @@
           <dd>{{ commit.fullId }}</dd>
         </div>
       </dl>
+
+      <p v-if="commit.body" class="history-commit-body">{{ commit.body }}</p>
 
       <div v-if="commit.refs.length" class="history-detail-refs">
         <HistoryRefBadge v-for="ref in commit.refs" :key="ref.label" :commit-ref="ref" />
@@ -78,29 +77,25 @@ defineProps<{
 .history-detail-header {
   display: flex;
   flex: 0 0 auto;
+  box-sizing: border-box;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  min-height: 48px;
-  padding: 8px 10px;
+  height: 36px;
+  padding: 2px 10px;
   border-bottom: 1px solid var(--app-border);
 }
 
-.history-detail-title {
-  margin-bottom: 2px;
-  color: var(--app-text);
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-
 .history-detail-header h1 {
-  max-width: 72vw;
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 17px;
   margin: 0;
   overflow: hidden;
   color: var(--app-text);
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 650;
+  line-height: 17px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -151,6 +146,13 @@ defineProps<{
   flex-wrap: wrap;
   gap: 6px;
   margin-top: 12px;
+}
+
+.history-commit-body {
+  margin: 12px 0 0;
+  color: var(--app-text-muted);
+  line-height: 1.45;
+  white-space: pre-wrap;
 }
 
 .history-changes-section {

@@ -7,7 +7,14 @@
       </div>
 
       <div class="history-toolbar-actions" aria-label="History controls">
-        <q-btn flat dense round icon="refresh" aria-label="Refresh history">
+        <q-btn
+          flat
+          dense
+          round
+          icon="refresh"
+          aria-label="Refresh history"
+          @click="$emit('refresh')"
+        >
           <q-tooltip>Refresh history</q-tooltip>
         </q-btn>
         <q-btn flat dense round icon="account_tree" aria-label="Toggle graph lanes">
@@ -20,27 +27,19 @@
     </header>
 
     <div class="history-table" role="table" aria-label="Commit graph" :style="graphStyle">
-      <div class="history-row history-row-header" role="row">
-        <div class="history-graph-heading" role="columnheader">Graph</div>
-        <div role="columnheader">Message</div>
-        <div role="columnheader">Refs</div>
-        <div role="columnheader">Committer</div>
-        <div role="columnheader">ID</div>
-        <div role="columnheader">Time</div>
-        <div class="history-stat-heading" role="columnheader">Changes</div>
-      </div>
-
-      <button
-        v-for="commit in renderedCommits"
-        :key="commit.id"
-        class="history-row history-commit-row"
-        :class="{ 'history-commit-row-active': commit.id === selectedCommitId }"
-        type="button"
-        role="row"
-        @click="$emit('selectCommit', commit.id)"
-      >
-        <div class="history-graph-cell" role="cell" aria-hidden="true">
-          <svg class="history-graph-svg" :viewBox="`0 0 ${graphWidth} 36`" focusable="false">
+      <div class="history-table-canvas">
+        <svg
+          class="history-graph-svg"
+          :viewBox="`0 0 ${graphWidth} ${graphHeight}`"
+          :style="{ height: `${graphHeight}px` }"
+          focusable="false"
+          aria-hidden="true"
+        >
+          <g
+            v-for="(commit, row) in renderedCommits"
+            :key="`${commit.id}-paths`"
+            :transform="`translate(0 ${row * 36})`"
+          >
             <path
               v-for="line in commit.graph.segments"
               :key="line.key"
@@ -48,33 +47,65 @@
               :stroke="line.color"
               class="history-graph-line"
             />
-            <circle
-              :cx="laneX(commit.graph.lane)"
-              cy="18"
-              r="5"
-              :fill="commit.graph.color"
-              class="history-graph-dot"
+          </g>
+          <circle
+            v-for="(commit, row) in renderedCommits"
+            :key="commit.id"
+            :cx="laneX(commit.graph.lane)"
+            :cy="row * 36 + 18"
+            r="5"
+            :fill="commit.graph.color"
+            class="history-graph-dot"
+          />
+        </svg>
+        <div class="history-row history-row-header" role="row">
+          <div class="history-graph-heading" role="columnheader">Graph</div>
+          <div role="columnheader">Message</div>
+          <div role="columnheader">Refs</div>
+          <div role="columnheader">Committer</div>
+          <div role="columnheader">ID</div>
+          <div role="columnheader">Time</div>
+          <div class="history-stat-heading" role="columnheader">Changes</div>
+        </div>
+
+        <button
+          v-for="commit in renderedCommits"
+          :key="commit.id"
+          class="history-row history-commit-row"
+          :class="{
+            'history-commit-row-active': commit.id === selectedCommitId,
+            'history-commit-row-head': isCheckedOut(commit),
+          }"
+          type="button"
+          role="row"
+          @click="$emit('selectCommit', commit.id)"
+        >
+          <div class="history-graph-cell" role="cell" aria-hidden="true" />
+
+          <div class="history-message-cell" role="cell">
+            <q-icon
+              v-if="isCheckedOut(commit)"
+              name="bookmark"
+              class="history-head-marker"
+              aria-label="Checked out commit"
             />
-          </svg>
-        </div>
+            <q-icon :name="commit.kindIcon" />
+            <span>{{ commit.message }}</span>
+          </div>
 
-        <div class="history-message-cell" role="cell">
-          <q-icon :name="commit.kindIcon" />
-          <span>{{ commit.message }}</span>
-        </div>
+          <div class="history-refs-cell" role="cell">
+            <HistoryRefBadge v-for="ref in commit.refs" :key="ref.label" :commit-ref="ref" />
+          </div>
 
-        <div class="history-refs-cell" role="cell">
-          <HistoryRefBadge v-for="ref in commit.refs" :key="ref.label" :commit-ref="ref" />
-        </div>
-
-        <div class="history-muted-cell" role="cell">{{ commit.committer }}</div>
-        <div class="history-id-cell" role="cell">{{ commit.shortId }}</div>
-        <div class="history-muted-cell" role="cell">{{ commit.time }}</div>
-        <div class="history-change-stat" role="cell">
-          <span class="history-added">+{{ commit.stats.added }}</span>
-          <span class="history-removed">-{{ commit.stats.removed }}</span>
-        </div>
-      </button>
+          <div class="history-muted-cell" role="cell">{{ commit.committer }}</div>
+          <div class="history-id-cell" role="cell">{{ commit.shortId }}</div>
+          <div class="history-muted-cell" role="cell">{{ commit.time }}</div>
+          <div class="history-change-stat" role="cell">
+            <span class="history-added">+{{ commit.stats.added }}</span>
+            <span class="history-removed">-{{ commit.stats.removed }}</span>
+          </div>
+        </button>
+      </div>
     </div>
   </section>
 </template>
@@ -92,12 +123,15 @@ const props = defineProps<{
 
 defineEmits<{
   selectCommit: [commitId: string];
+  refresh: [];
 }>();
 
 const graphModel = computed(() => renderCommitGraph(props.commits));
 const renderedCommits = computed(() => graphModel.value.rendered);
 const graphWidth = computed(() => graphWidthForMaxLane(graphModel.value.maxLane));
+const graphHeight = computed(() => renderedCommits.value.length * 36);
 const graphStyle = computed(() => ({ '--history-graph-width': `${graphWidth.value}px` }));
+const isCheckedOut = (commit: HistoryCommit) => commit.refs.some((ref) => ref.type === 'head');
 </script>
 
 <style scoped>
@@ -150,6 +184,11 @@ const graphStyle = computed(() => ({ '--history-graph-width': `${graphWidth.valu
   overflow: auto;
 }
 
+.history-table-canvas {
+  position: relative;
+  min-width: calc(var(--history-graph-width, 124px) + 856px);
+}
+
 .history-row {
   display: grid;
   grid-template-columns:
@@ -157,13 +196,12 @@ const graphStyle = computed(() => ({ '--history-graph-width': `${graphWidth.valu
     minmax(120px, 0.8fr) 82px 96px 82px;
   align-items: center;
   width: 100%;
-  min-width: calc(var(--history-graph-width, 124px) + 856px);
 }
 
 .history-row-header {
   position: sticky;
   top: 0;
-  z-index: 1;
+  z-index: 3;
   height: 30px;
   padding: 0 10px;
   color: var(--app-caption);
@@ -173,9 +211,12 @@ const graphStyle = computed(() => ({ '--history-graph-width': `${graphWidth.valu
   text-transform: uppercase;
   background: var(--app-surface);
   border-bottom: 1px solid var(--app-border);
+  box-shadow: 0 1px 0 var(--app-border);
 }
 
 .history-commit-row {
+  position: relative;
+  z-index: 1;
   height: 36px;
   padding: 0 10px;
   color: var(--app-text);
@@ -196,15 +237,22 @@ const graphStyle = computed(() => ({ '--history-graph-width': `${graphWidth.valu
   box-shadow: inset 2px 0 0 var(--app-accent);
 }
 
+.history-commit-row-head {
+  font-weight: 650;
+}
+
 .history-graph-cell,
 .history-graph-heading {
   padding-right: 6px;
 }
 
 .history-graph-svg {
-  display: block;
+  position: absolute;
+  top: 30px;
+  left: 10px;
   width: var(--history-graph-width, 124px);
-  height: 36px;
+  pointer-events: none;
+  z-index: 2;
 }
 
 .history-graph-line {
@@ -232,6 +280,11 @@ const graphStyle = computed(() => ({ '--history-graph-width': `${graphWidth.valu
   flex: 0 0 auto;
   color: var(--app-icon-muted);
   font-size: 16px;
+}
+
+.history-message-cell :deep(.history-head-marker) {
+  color: var(--app-accent);
+  font-size: 14px;
 }
 
 .history-message-cell span,

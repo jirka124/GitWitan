@@ -1,7 +1,7 @@
 <template>
   <q-splitter v-model="detailSplitter" horizontal :limits="detailSplitterLimits" class="history-view-splitter">
     <template #before>
-      <CommitGraphTable :commits="commits" :selected-commit-id="selectedCommitId" @select-commit="selectedCommitId = $event" />
+      <CommitGraphTable :commits="commits" :selected-commit-id="selectedCommitId" @select-commit="selectedCommitId = $event" @refresh="loadHistory" />
     </template>
     <template #after>
       <CommitDetailPanel v-if="selectedCommit" :commit="selectedCommit" />
@@ -30,9 +30,9 @@ const commits = computed<HistoryCommit[]>(() =>
     fullId: entry.id,
     time: entry.committedAt,
     kindIcon: entry.parents.length > 1 ? 'call_merge' : 'commit',
-    refs: [],
-    stats: { added: 0, removed: 0 },
-    changes: [],
+    refs: entry.refs.map((ref) => ({ ...ref, icon: ref.type === 'tag' ? 'sell' : ref.type === 'origin' ? 'cloud' : 'account_tree' })),
+    stats: entry.stats,
+    changes: entry.changes.map((change) => ({ ...change, status: change.kind, badge: change.kind.charAt(0).toUpperCase() })),
   })),
 );
 const selectedCommit = computed(() => commits.value.find((commit) => commit.id === selectedCommitId.value));

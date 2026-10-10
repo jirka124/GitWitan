@@ -26,6 +26,7 @@ export type HistoryCommit = {
   shortId: string;
   fullId: string;
   message: string;
+  body: string;
   author: string;
   committer: string;
   time: string;
