@@ -41,7 +41,6 @@ export type RepositoryRecord = {
   error: string | undefined;
 };
 
-
 export type RepositoryBranch = {
   name: string;
   isCurrent: boolean;
@@ -94,4 +93,23 @@ export type RepositoryWorkspaceOverview = {
   remoteBranches: RepositoryRemoteBranch[];
   stashes: RepositoryStash[];
   history: RepositoryHistoryEntry[];
+};
+
+/** A stale-while-revalidate view of one tracked repository. */
+export type RepositorySnapshot = {
+  repository: TrackedRepository;
+  summary: RepositorySummary | undefined;
+  status: RepositoryStatus | undefined;
+  overview: RepositoryWorkspaceOverview | undefined;
+  updatedAt: string | undefined;
+  error: string | undefined;
+};
+
+/** The small, frequently changing portion of a repository snapshot. */
+export type RepositoryStatusUpdate = {
+  repositoryId: string;
+  status: RepositoryStatus | undefined;
+  dirtyCount: number | undefined;
+  updatedAt: string | undefined;
+  error: string | undefined;
 };

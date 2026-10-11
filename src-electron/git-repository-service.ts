@@ -1,4 +1,5 @@
 import { execFile } from 'node:child_process';
+import path from 'node:path';
 import { promisify } from 'node:util';
 import type {
   RepositoryChangeKind,
@@ -19,6 +20,16 @@ export class GitRepositoryService {
     return (await this.git(folderPath, ['rev-parse', '--show-toplevel'])).trim();
   }
 
+  async resolveGitDirectory(rootPath: string) {
+    const gitDirectory = (await this.git(rootPath, ['rev-parse', '--git-dir'])).trim();
+    return path.resolve(rootPath, gitDirectory);
+  }
+
+  async resolveGitCommonDirectory(rootPath: string) {
+    const gitDirectory = (await this.git(rootPath, ['rev-parse', '--git-common-dir'])).trim();
+    return path.resolve(rootPath, gitDirectory);
+  }
+
   async clone(repositoryUrl: string, targetPath: string) {
     await executeFile('git', ['clone', repositoryUrl, targetPath], {
       windowsHide: true,
@@ -33,10 +44,14 @@ export class GitRepositoryService {
     });
   }
 
-  async readSummary(repositoryId: string, rootPath: string): Promise<RepositorySummary> {
-    const [branch, status, remotes, commitCount, lastCommitAt] = await Promise.all([
+  async readSummary(
+    repositoryId: string,
+    rootPath: string,
+    status?: RepositoryStatus,
+  ): Promise<RepositorySummary> {
+    const [branch, resolvedStatus, remotes, commitCount, lastCommitAt] = await Promise.all([
       this.git(rootPath, ['branch', '--show-current']).then((value) => value.trim() || undefined),
-      this.readStatus(repositoryId, rootPath),
+      status ? Promise.resolve(status) : this.readStatus(repositoryId, rootPath),
       this.readRemotes(rootPath),
       this.git(rootPath, ['rev-list', '--count', 'HEAD'])
         .then((value) => Number.parseInt(value.trim(), 10))
@@ -50,7 +65,9 @@ export class GitRepositoryService {
       repositoryId,
       rootPath,
       branch,
-      dirtyCount: new Set([...status.staged, ...status.unstaged].map((file) => file.path)).size,
+      dirtyCount: new Set(
+        [...resolvedStatus.staged, ...resolvedStatus.unstaged].map((file) => file.path),
+      ).size,
       commitCount,
       lastCommitAt,
       remotes,
@@ -58,12 +75,17 @@ export class GitRepositoryService {
   }
 
   async readStatus(repositoryId: string, rootPath: string): Promise<RepositoryStatus> {
-    const [statusOutput, untrackedOutput] = await Promise.all([
-      this.git(rootPath, ['status', '--porcelain=v1']),
-      this.git(rootPath, ['ls-files', '--others', '--exclude-standard', '-z']),
+    // Porcelain with NUL separators carries untracked files itself and avoids
+    // a second full worktree walk via `git ls-files`. It also preserves paths
+    // containing newlines and the second path of rename/copy records.
+    const statusOutput = await this.git(rootPath, [
+      'status',
+      '--porcelain=v1',
+      '-z',
+      '--untracked-files=all',
     ]);
 
-    return parseStatus(repositoryId, statusOutput, untrackedOutput.split('\0').filter(Boolean));
+    return parseStatus(repositoryId, statusOutput);
   }
 
   async readDiff(rootPath: string, filePath: string, staged: boolean, untracked: boolean) {
@@ -292,15 +314,13 @@ function toCommitRef(refName: string, headBranch: string): RepositoryCommitRef |
     return { label: refName.slice('refs/tags/'.length), type: 'tag' };
   return undefined;
 }
-function parseStatus(
-  repositoryId: string,
-  output: string,
-  untrackedPaths: string[],
-): RepositoryStatus {
+function parseStatus(repositoryId: string, output: string): RepositoryStatus {
   const staged: RepositoryChangedFile[] = [];
   const unstaged: RepositoryChangedFile[] = [];
 
-  for (const line of output.split(/\r?\n/)) {
+  const records = output.split('\0');
+  for (let index = 0; index < records.length; index += 1) {
+    const line = records[index] ?? '';
     if (!line || line.startsWith('!!')) continue;
 
     const indexStatus = line[0] ?? ' ';
@@ -308,7 +328,10 @@ function parseStatus(
     const filePath = line.slice(3);
 
     if (!filePath) continue;
-    if (indexStatus === '?' && workTreeStatus === '?') continue;
+    if (indexStatus === '?' && workTreeStatus === '?') {
+      unstaged.push({ path: filePath, kind: 'untracked' });
+      continue;
+    }
 
     if (indexStatus !== ' ' && indexStatus !== '?') {
       staged.push({ path: filePath, kind: toChangeKind(indexStatus) });
@@ -316,10 +339,17 @@ function parseStatus(
     if (workTreeStatus !== ' ') {
       unstaged.push({ path: filePath, kind: toChangeKind(workTreeStatus) });
     }
-  }
-
-  for (const path of untrackedPaths) {
-    unstaged.push({ path, kind: 'untracked' });
+    // In `-z` porcelain rename/copy records are followed by their source
+    // path. The destination is the path after XY and is what the UI should
+    // render, so consume the source record instead of mistaking it for XY.
+    if (
+      indexStatus === 'R' ||
+      indexStatus === 'C' ||
+      workTreeStatus === 'R' ||
+      workTreeStatus === 'C'
+    ) {
+      index += 1;
+    }
   }
 
   return { repositoryId, staged, unstaged };

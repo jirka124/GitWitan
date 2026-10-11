@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia';
 import type { ChangeTreeNode } from '../types/repository';
 import type { RepositoryChangedFile } from '../types/repository-data';
+import type { RepositoryStatus } from '../types/repository-data';
+import { useRepositorySnapshotsStore } from './repositorySnapshots';
 
 const statusBadge = (kind: RepositoryChangedFile['kind']) =>
   kind === 'modified'
@@ -72,11 +74,21 @@ export const useRepositoryWorkspaceStore = defineStore('repositoryWorkspace', {
     async load(repositoryId: string) {
       if (!window.gitwitanRepositories) return;
 
+      const hasChangedRepository = this.repositoryId !== repositoryId;
       this.repositoryId = repositoryId;
+      // Do not keep showing the previous repository's changes while an uncached
+      // snapshot for the newly selected repository is being populated.
+      if (hasChangedRepository) {
+        this.stagedTree = [];
+        this.unstagedTree = [];
+      }
       this.isLoading = true;
       this.error = undefined;
       try {
-        const status = await window.gitwitanRepositories.status(repositoryId);
+        const snapshotsStore = useRepositorySnapshotsStore();
+        await snapshotsStore.load(repositoryId);
+        const status = snapshotsStore.snapshots[repositoryId]?.status;
+        if (!status) return;
         if (this.repositoryId !== repositoryId) return;
 
         this.stagedTree = toTree(status.staged, 'staged');
@@ -86,6 +98,12 @@ export const useRepositoryWorkspaceStore = defineStore('repositoryWorkspace', {
       } finally {
         if (this.repositoryId === repositoryId) this.isLoading = false;
       }
+    },
+
+    applyStatus(status: RepositoryStatus) {
+      if (this.repositoryId !== status.repositoryId) return;
+      this.stagedTree = toTree(status.staged, 'staged');
+      this.unstagedTree = toTree(status.unstaged, 'unstaged');
     },
 
     async stage(repositoryId: string, filePaths: string[]) {

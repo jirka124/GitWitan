@@ -23,15 +23,17 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue';
+import { computed, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useRepositoryManagementStore } from '../../stores/repositoryManagement';
 import { useRepositorySessionStore } from '../../stores/repositorySession';
+import { useRepositorySnapshotsStore } from '../../stores/repositorySnapshots';
 
 const route = useRoute();
 const router = useRouter();
 const repositoryManagementStore = useRepositoryManagementStore();
 const repositorySessionStore = useRepositorySessionStore();
+const snapshotsStore = useRepositorySnapshotsStore();
 
 const activeRepositoryId = computed(() =>
   typeof route.params.repositoryId === 'string' ? route.params.repositoryId : undefined,
@@ -46,11 +48,25 @@ const openRepositories = computed(() =>
 
 onMounted(async () => {
   await repositoryManagementStore.load();
-
-  if (activeRepositoryId.value) {
-    repositorySessionStore.open(activeRepositoryId.value);
-  }
 });
+
+watch(
+  activeRepositoryId,
+  (repositoryId) => {
+    if (repositoryId) repositorySessionStore.open(repositoryId);
+  },
+  { immediate: true },
+);
+
+watch(
+  () => ({
+    openRepositoryIds: [...repositorySessionStore.openRepositoryIds],
+    activeRepositoryId: activeRepositoryId.value,
+  }),
+  ({ openRepositoryIds, activeRepositoryId: repositoryId }) =>
+    void snapshotsStore.syncSession(openRepositoryIds, repositoryId),
+  { deep: true, immediate: true },
+);
 
 const openRepositoryManagement = () => {
   void router.push('/');

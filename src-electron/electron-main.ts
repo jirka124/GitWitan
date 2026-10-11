@@ -9,9 +9,41 @@ import {
 import path from 'node:path';
 import os from 'node:os';
 import { registerQuasarRuntime, resolveElectronAssetsPath } from '#q-app/electron/main';
+import { GitRepositoryService } from './git-repository-service';
+import { RepositoryRegistry } from './repository-registry';
+import { RepositorySnapshotCache } from './repository-snapshot-cache';
+import type { RepositoryStatusUpdate } from '../src/types/repository-data';
 
 // needed in case process is undefined under Linux
 const platform = process.platform || os.platform();
+const repositoryRegistry = new RepositoryRegistry(
+  path.join(app.getPath('userData'), 'repositories.json'),
+);
+const gitRepositoryService = new GitRepositoryService();
+const repositorySnapshotCache = new RepositorySnapshotCache(
+  repositoryRegistry,
+  gitRepositoryService,
+  (snapshot, changeKind) => {
+    const channel =
+      changeKind === 'status'
+        ? 'gitwitan:repositories:status-changed'
+        : 'gitwitan:repositories:snapshot-changed';
+    const payload: RepositoryStatusUpdate | typeof snapshot =
+      changeKind === 'status'
+        ? {
+            repositoryId: snapshot.repository.id,
+            status: snapshot.status,
+            dirtyCount: snapshot.summary?.dirtyCount,
+            updatedAt: snapshot.updatedAt,
+            error: snapshot.error,
+          }
+        : snapshot;
+    for (const window of BrowserWindow.getAllWindows()) {
+      window.webContents.send(channel, payload);
+    }
+  },
+  () => BrowserWindow.getAllWindows().some((window) => window.isVisible() && !window.isMinimized()),
+);
 
 const TITLE_BAR_HEIGHT = 30;
 const WINDOW_THEMES = {
@@ -98,6 +130,13 @@ async function createWindow() {
       mainWindow?.webContents.closeDevTools();
     });
   }
+
+  // The cache uses a lower refresh budget while every window is hidden. Let
+  // it immediately reconsider the active repository when the app returns.
+  mainWindow.on('show', () => repositorySnapshotCache.onVisibilityChanged());
+  mainWindow.on('restore', () => repositorySnapshotCache.onVisibilityChanged());
+  mainWindow.on('hide', () => repositorySnapshotCache.onVisibilityChanged());
+  mainWindow.on('minimize', () => repositorySnapshotCache.onVisibilityChanged());
 }
 
 ipcMain.handle('gitwitan:open-external-url', async (_event, url: string) => {
@@ -124,12 +163,11 @@ ipcMain.handle('gitwitan:select-folder', async (event, defaultPath?: string) => 
 });
 
 ipcMain.handle('gitwitan:repositories:status', async (_event, repositoryId: string) => {
-  const repository = (await repositoryRegistry.list()).find((item) => item.id === repositoryId);
-  if (!repository) {
+  const snapshot = await repositorySnapshotCache.snapshot(repositoryId);
+  if (!snapshot) {
     throw new Error('Tracked repository was not found.');
   }
-
-  return gitRepositoryService.readStatus(repositoryId, repository.path);
+  return snapshot.status ?? { repositoryId, staged: [], unstaged: [] };
 });
 
 ipcMain.handle(
@@ -150,6 +188,7 @@ ipcMain.handle(
     const repository = (await repositoryRegistry.list()).find((item) => item.id === repositoryId);
     if (!repository) throw new Error('Tracked repository was not found.');
     await gitRepositoryService.stage(repository.path, filePaths);
+    repositorySnapshotCache.invalidate(repositoryId);
   },
 );
 
@@ -159,13 +198,22 @@ ipcMain.handle(
     const repository = (await repositoryRegistry.list()).find((item) => item.id === repositoryId);
     if (!repository) throw new Error('Tracked repository was not found.');
     await gitRepositoryService.unstage(repository.path, filePaths);
+    repositorySnapshotCache.invalidate(repositoryId);
   },
 );
 
 ipcMain.handle('gitwitan:repositories:overview', async (_event, repositoryId: string) => {
-  const repository = (await repositoryRegistry.list()).find((item) => item.id === repositoryId);
-  if (!repository) throw new Error('Tracked repository was not found.');
-  return gitRepositoryService.readWorkspaceOverview(repositoryId, repository.path);
+  const snapshot = await repositorySnapshotCache.snapshot(repositoryId);
+  if (!snapshot) throw new Error('Tracked repository was not found.');
+  return (
+    snapshot.overview ?? {
+      repositoryId,
+      branches: [],
+      remoteBranches: [],
+      stashes: [],
+      history: [],
+    }
+  );
 });
 
 ipcMain.on('gitwitan:set-window-theme', (event, theme: WindowTheme) => {
@@ -179,6 +227,7 @@ void app.whenReady().then(async () => {
   await registerQuasarRuntime();
 
   void createWindow();
+  void repositorySnapshotCache.start();
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -192,29 +241,34 @@ app.on('window-all-closed', () => {
     app.quit();
   }
 });
-import type { RepositoryRecord, TrackedRepository } from '../src/types/repository-data';
-import { GitRepositoryService } from './git-repository-service';
-import { RepositoryRegistry } from './repository-registry';
-const repositoryRegistry = new RepositoryRegistry(path.join(app.getPath('userData'), 'repositories.json'));
-const gitRepositoryService = new GitRepositoryService();
+ipcMain.handle('gitwitan:repositories:list', async () => repositorySnapshotCache.records());
+ipcMain.handle('gitwitan:repositories:bootstrap', async () => repositorySnapshotCache.snapshots());
+ipcMain.handle('gitwitan:repositories:snapshot', async (_event, repositoryId: string) =>
+  repositorySnapshotCache.snapshot(repositoryId),
+);
+ipcMain.handle('gitwitan:repositories:activate', async (_event, repositoryId: string) =>
+  repositorySnapshotCache.activate(repositoryId),
+);
+ipcMain.handle('gitwitan:repositories:force-refresh', async (_event, repositoryId: string) => {
+  // snapshot() synchronizes the registry first, so this validates against
+  // persisted tracking state rather than silently accepting a stale ID.
+  const snapshot = await repositorySnapshotCache.snapshot(repositoryId);
+  if (!snapshot) throw new Error('Tracked repository was not found.');
+  await repositorySnapshotCache.refresh(repositoryId);
+  return repositorySnapshotCache.snapshot(repositoryId);
+});
+ipcMain.handle('gitwitan:repositories:set-open', async (_event, repositoryIds: string[]) =>
+  repositorySnapshotCache.setOpenRepositoryIds(repositoryIds),
+);
+ipcMain.handle(
+  'gitwitan:repositories:sync-session',
+  async (_event, session: { openRepositoryIds: string[]; activeRepositoryId?: string }) => {
+    await repositorySnapshotCache.setOpenRepositoryIds(session.openRepositoryIds);
 
-const toRepositoryRecord = async (repository: TrackedRepository): Promise<RepositoryRecord> => {
-  try {
-    return {
-      repository,
-      summary: await gitRepositoryService.readSummary(repository.id, repository.path),
-      error: undefined,
-    };
-  } catch (error: unknown) {
-    return {
-      repository,
-      summary: undefined,
-      error: error instanceof Error ? error.message : 'Unable to inspect repository.',
-    };
-  }
-};
-ipcMain.handle('gitwitan:repositories:list', async () =>
-  Promise.all((await repositoryRegistry.list()).map(toRepositoryRecord)),
+    return session.activeRepositoryId
+      ? repositorySnapshotCache.activate(session.activeRepositoryId)
+      : repositorySnapshotCache.deactivate();
+  },
 );
 
 ipcMain.handle(
@@ -233,7 +287,9 @@ ipcMain.handle(
 
     await gitRepositoryService.clone(repositoryUrl, targetPath);
     const rootPath = await gitRepositoryService.resolveRoot(targetPath);
-    return toRepositoryRecord(await repositoryRegistry.track(rootPath, path.basename(rootPath)));
+    return repositorySnapshotCache.register(
+      await repositoryRegistry.track(rootPath, path.basename(rootPath)),
+    );
   },
 );
 
@@ -241,20 +297,27 @@ ipcMain.handle('gitwitan:repositories:init', async (_event, folderPath: string) 
   const targetPath = path.resolve(folderPath);
   await gitRepositoryService.init(targetPath);
   const rootPath = await gitRepositoryService.resolveRoot(targetPath);
-  return toRepositoryRecord(await repositoryRegistry.track(rootPath, path.basename(rootPath)));
+  return repositorySnapshotCache.register(
+    await repositoryRegistry.track(rootPath, path.basename(rootPath)),
+  );
 });
 
 ipcMain.handle('gitwitan:repositories:add-existing', async (_event, folderPath: string) => {
   const rootPath = await gitRepositoryService.resolveRoot(folderPath);
   const repository = await repositoryRegistry.track(rootPath, path.basename(rootPath));
-  return toRepositoryRecord(repository);
+  return repositorySnapshotCache.register(repository);
 });
 
 ipcMain.handle('gitwitan:repositories:refresh', async (_event, repositoryId: string) => {
-  const repository = (await repositoryRegistry.list()).find((item) => item.id === repositoryId);
-  if (!repository) {
+  const snapshot = await repositorySnapshotCache.snapshot(repositoryId);
+  if (!snapshot) {
     throw new Error('Tracked repository was not found.');
   }
-
-  return toRepositoryRecord(repository);
+  await repositorySnapshotCache.refresh(repositoryId);
+  const refreshedSnapshot = await repositorySnapshotCache.snapshot(repositoryId);
+  return {
+    repository: refreshedSnapshot?.repository ?? snapshot.repository,
+    summary: refreshedSnapshot?.summary,
+    error: refreshedSnapshot?.error,
+  };
 });

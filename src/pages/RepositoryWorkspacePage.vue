@@ -36,11 +36,13 @@ import RepositoryMainView from '../components/repository/RepositoryMainView.vue'
 import RepositorySidebar from '../components/repository/RepositorySidebar.vue';
 import RepositorySwitcher from '../components/repository/RepositorySwitcher.vue';
 import { useRepositoryWorkspaceStore } from '../stores/repositoryWorkspace';
+import { useRepositorySnapshotsStore } from '../stores/repositorySnapshots';
 import type { RepositoryView } from '../types/repository';
 
 const $q = useQuasar();
 const route = useRoute();
 const workspaceStore = useRepositoryWorkspaceStore();
+const snapshotsStore = useRepositorySnapshotsStore();
 
 const loadRepositoryStatus = () => {
   if (typeof route.params.repositoryId === 'string') {
@@ -50,12 +52,22 @@ const loadRepositoryStatus = () => {
 
 onMounted(loadRepositoryStatus);
 watch(() => route.params.repositoryId, loadRepositoryStatus);
+watch(
+  () => {
+    const repositoryId = route.params.repositoryId;
+    return typeof repositoryId === 'string'
+      ? snapshotsStore.snapshots[repositoryId]?.status
+      : undefined;
+  },
+  (status) => {
+    if (status) workspaceStore.applyStatus(status);
+  },
+);
 
 const activeView = ref<RepositoryView>('history');
 const repositorySplitter = ref(200);
 
 const repositorySplitterLimits = computed<[number, number]>(() => [200, $q.screen.width - 8]);
-
 </script>
 
 <style scoped>

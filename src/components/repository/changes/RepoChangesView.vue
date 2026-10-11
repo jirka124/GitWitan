@@ -36,7 +36,11 @@
     </template>
 
     <template #after>
-      <DiffPreviewPanel :active-change="activeChange" :diff-content="diffContent" :is-loading="isLoadingDiff" />
+      <DiffPreviewPanel
+        :active-change="activeChange"
+        :diff-content="diffContent"
+        :is-loading="isLoadingDiff"
+      />
     </template>
   </q-splitter>
 
@@ -49,7 +53,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useQuasar } from 'quasar';
 import { useRepositoryWorkspaceStore } from '../../../stores/repositoryWorkspace';
@@ -66,7 +70,7 @@ type ActiveChange = {
   node: ChangeTreeNode;
 };
 
-defineProps<{
+const props = defineProps<{
   unstagedTree: ChangeTreeNode[];
   stagedTree: ChangeTreeNode[];
   unstagedFileCount: number;
@@ -84,6 +88,7 @@ const amendCommit = ref(false);
 const activeChange = ref<ActiveChange>();
 const diffContent = ref('');
 const isLoadingDiff = ref(false);
+let diffRequestId = 0;
 
 const changesPreviewSplitterLimits = computed<[number, number]>(() => [
   200,
@@ -94,16 +99,38 @@ const onResize = (size: { width: number; height: number }) => {
   changesViewBox.value = size;
 };
 
+const currentRepositoryId = () =>
+  typeof route.params.repositoryId === 'string' ? route.params.repositoryId : undefined;
+
+const clearActiveChange = () => {
+  diffRequestId += 1;
+  activeChange.value = undefined;
+  diffContent.value = '';
+  isLoadingDiff.value = false;
+};
+
+const isCurrentDiffRequest = (
+  requestId: number,
+  repositoryId: string | undefined,
+  area: ChangeArea,
+  nodeKey: string,
+) =>
+  requestId === diffRequestId &&
+  repositoryId === currentRepositoryId() &&
+  activeChange.value?.area === area &&
+  activeChange.value.node.key === nodeKey;
+
 const selectChange = async (area: ChangeArea, node: ChangeTreeNode) => {
+  const repositoryId = currentRepositoryId();
+  const requestId = ++diffRequestId;
   activeChange.value = { area, node };
   diffContent.value = '';
   isLoadingDiff.value = true;
 
-  const repositoryId = typeof route.params.repositoryId === 'string' ? route.params.repositoryId : undefined;
   const filePath = node.caption ?? node.label;
 
   try {
-    diffContent.value =
+    const content =
       repositoryId && window.gitwitanRepositories
         ? await window.gitwitanRepositories.diff(
             repositoryId,
@@ -112,12 +139,39 @@ const selectChange = async (area: ChangeArea, node: ChangeTreeNode) => {
             node.status === 'untracked',
           )
         : '';
+
+    if (isCurrentDiffRequest(requestId, repositoryId, area, node.key)) {
+      diffContent.value = content;
+    }
   } catch (error: unknown) {
-    diffContent.value = error instanceof Error ? error.message : 'Unable to load diff.';
+    if (isCurrentDiffRequest(requestId, repositoryId, area, node.key)) {
+      diffContent.value = error instanceof Error ? error.message : 'Unable to load diff.';
+    }
   } finally {
-    isLoadingDiff.value = false;
+    if (isCurrentDiffRequest(requestId, repositoryId, area, node.key)) {
+      isLoadingDiff.value = false;
+    }
   }
 };
+
+const containsNode = (nodes: ChangeTreeNode[], key: string): boolean =>
+  nodes.some((node) => node.key === key || (node.children && containsNode(node.children, key)));
+
+watch(
+  () => route.params.repositoryId,
+  () => clearActiveChange(),
+);
+
+watch(
+  () => [props.unstagedTree, props.stagedTree] as const,
+  ([unstagedTree, stagedTree]) => {
+    const selectedChange = activeChange.value;
+    if (!selectedChange) return;
+
+    const tree = selectedChange.area === 'unstaged' ? unstagedTree : stagedTree;
+    if (!containsNode(tree, selectedChange.node.key)) clearActiveChange();
+  },
+);
 
 const collectFilePaths = (node: ChangeTreeNode): string[] => {
   if (!node.children?.length) {
@@ -136,8 +190,7 @@ const requestChangeAction = async (action: ChangeAction, node: ChangeTreeNode) =
   if (action === 'stage') await workspaceStore.stage(route.params.repositoryId, filePaths);
   else await workspaceStore.unstage(route.params.repositoryId, filePaths);
 
-  activeChange.value = undefined;
-  diffContent.value = '';
+  clearActiveChange();
 };
 </script>
 

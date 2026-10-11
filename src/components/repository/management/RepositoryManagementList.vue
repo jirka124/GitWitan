@@ -40,7 +40,7 @@ import type { ManagedRepository } from './repository-management.types';
 
 const props = defineProps<{
   repositories: ManagedRepository[];
-  activeRepositoryKey: string;
+  activeRepositoryKey: string | undefined;
   searchQuery: string;
 }>();
 

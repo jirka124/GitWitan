@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import type { ManagedRepository } from '../components/repository/management/repository-management.types';
-import type { RepositoryRecord } from '../types/repository-data';
+import type { RepositoryRecord, RepositorySnapshot } from '../types/repository-data';
 
 const toManagedRepository = (record: RepositoryRecord): ManagedRepository => ({
   key: record.repository.id,
@@ -22,11 +22,16 @@ const toManagedRepository = (record: RepositoryRecord): ManagedRepository => ({
   })),
 });
 
+const createSnapshotVersions = (): Record<string, number> => ({});
+
 export const useRepositoryManagementStore = defineStore('repositoryManagement', {
   state: () => ({
     repositories: [] as ManagedRepository[],
     isLoading: false,
     error: undefined as string | undefined,
+    snapshotVersion: 0,
+    snapshotVersions: createSnapshotVersions(),
+    loadSequence: 0,
   }),
 
   getters: {
@@ -37,14 +42,33 @@ export const useRepositoryManagementStore = defineStore('repositoryManagement', 
     async load() {
       if (!window.gitwitanRepositories) return;
 
+      const sequence = ++this.loadSequence;
+      const snapshotVersionAtStart = this.snapshotVersion;
       this.isLoading = true;
       this.error = undefined;
       try {
-        this.repositories = (await window.gitwitanRepositories.list()).map(toManagedRepository);
+        const loadedRepositories = (await window.gitwitanRepositories.list()).map(
+          toManagedRepository,
+        );
+        // A cache event may arrive while list() is in flight. Keep the newer
+        // snapshot-derived item instead of replacing it with this older list
+        // response. Ignore an obsolete concurrent load for the same reason.
+        if (sequence !== this.loadSequence) return;
+
+        const loadedByKey = new Map(
+          loadedRepositories.map((repository) => [repository.key, repository]),
+        );
+        for (const repository of this.repositories) {
+          if ((this.snapshotVersions[repository.key] ?? 0) > snapshotVersionAtStart) {
+            loadedByKey.set(repository.key, repository);
+          }
+        }
+        this.repositories = [...loadedByKey.values()];
       } catch (error: unknown) {
+        if (sequence !== this.loadSequence) return;
         this.error = error instanceof Error ? error.message : 'Unable to load repositories.';
       } finally {
-        this.isLoading = false;
+        if (sequence === this.loadSequence) this.isLoading = false;
       }
     },
 
@@ -56,6 +80,16 @@ export const useRepositoryManagementStore = defineStore('repositoryManagement', 
       else this.repositories.splice(index, 1, repository);
     },
 
+    applySnapshot(snapshot: RepositorySnapshot) {
+      this.snapshotVersion += 1;
+      this.snapshotVersions[snapshot.repository.id] = this.snapshotVersion;
+      this.applyRecord({
+        repository: snapshot.repository,
+        summary: snapshot.summary,
+        error: snapshot.error,
+      });
+    },
+
     async clone(repositoryUrl: string, parentFolder: string, folderName: string) {
       if (!window.gitwitanRepositories) {
         this.error = 'Repository cloning is available only in the Electron app.';
@@ -65,7 +99,11 @@ export const useRepositoryManagementStore = defineStore('repositoryManagement', 
       this.isLoading = true;
       this.error = undefined;
       try {
-        const record = await window.gitwitanRepositories.clone(repositoryUrl, parentFolder, folderName);
+        const record = await window.gitwitanRepositories.clone(
+          repositoryUrl,
+          parentFolder,
+          folderName,
+        );
         this.applyRecord(record);
         return record.repository.id;
       } catch (error: unknown) {
@@ -113,7 +151,8 @@ export const useRepositoryManagementStore = defineStore('repositoryManagement', 
         this.applyRecord(record);
         return record.repository.id;
       } catch (error: unknown) {
-        this.error = error instanceof Error ? error.message : 'Selected folder is not a Git repository.';
+        this.error =
+          error instanceof Error ? error.message : 'Selected folder is not a Git repository.';
         return undefined;
       }
     },
