@@ -8,8 +8,6 @@
       <div class="remote-row remote-row-head" role="row">
         <span role="columnheader">Name</span>
         <span role="columnheader">Remote</span>
-        <span role="columnheader">Status</span>
-        <span role="columnheader">Last fetch</span>
       </div>
       <div v-for="remote in remotes" :key="remote.name" class="remote-row" role="row">
         <span role="cell">{{ remote.name }}</span>
@@ -19,13 +17,8 @@
             <q-icon name="open_in_new" />
           </button>
         </span>
-        <span role="cell">
-          <span class="remote-status" :class="`remote-status-${remote.tone}`">
-            {{ remote.status }}
-          </span>
-        </span>
-        <span role="cell">{{ remote.lastFetch }}</span>
       </div>
+      <div v-if="!remotes.length" class="remote-empty">No remotes configured.</div>
     </div>
   </section>
 </template>
@@ -69,7 +62,7 @@ defineEmits<{
 
 .remote-row {
   display: grid;
-  grid-template-columns: 120px minmax(120px, 1fr) 120px 120px;
+  grid-template-columns: minmax(120px, 180px) minmax(120px, 1fr);
   min-height: 32px;
   border-top: 1px solid var(--app-border);
 }
@@ -116,29 +109,10 @@ defineEmits<{
   font-size: 13px;
 }
 
-.remote-status {
-  display: inline-flex;
-  align-items: center;
-  max-width: 100%;
-  height: 18px;
-  padding: 0 6px;
-  font-size: 10px;
-  font-weight: 800;
-  border: 1px solid transparent;
-  border-radius: 999px;
-}
-
-.remote-status-ok {
-  color: var(--app-accent);
-  background: color-mix(in srgb, var(--app-accent) 12%, transparent);
-  border-color: color-mix(in srgb, var(--app-accent) 28%, transparent);
-}
-
-.remote-status-warning,
-.remote-status-stale {
-  color: var(--app-status-warning);
-  background: color-mix(in srgb, var(--app-status-warning) 12%, transparent);
-  border-color: color-mix(in srgb, var(--app-status-warning) 28%, transparent);
+.remote-empty {
+  padding: 10px 8px;
+  color: var(--app-caption);
+  font-size: 11px;
 }
 
 @media (max-width: 640px) {

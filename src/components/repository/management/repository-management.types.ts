@@ -1,11 +1,14 @@
-export type ManagedRepositoryRemoteTone = 'ok' | 'warning' | 'stale';
+import type {
+  RepositoryBranch,
+  RepositoryChangedFile,
+  RepositoryHistoryEntry,
+  RepositoryRemoteBranch,
+  RepositoryStash,
+} from '../../../types/repository-data';
 
 export type ManagedRepositoryRemote = {
   name: string;
   href: string;
-  status: string;
-  tone: ManagedRepositoryRemoteTone;
-  lastFetch: string;
 };
 
 export type ManagedRepository = {
@@ -14,10 +17,19 @@ export type ManagedRepository = {
   path: string;
   icon: string;
   dirtyCount: number;
-  lastFetch: string;
+  branch: string | undefined;
   commitCount: string;
   lastCommit: string;
   remotes: ManagedRepositoryRemote[];
+  stagedChanges: RepositoryChangedFile[];
+  unstagedChanges: RepositoryChangedFile[];
+  branches: RepositoryBranch[];
+  remoteBranches: RepositoryRemoteBranch[];
+  stashes: RepositoryStash[];
+  history: RepositoryHistoryEntry[];
+  hasOverview: boolean;
+  updatedAt: string | undefined;
+  error: string | undefined;
 };
 
 export type RepositoryIconOption = {

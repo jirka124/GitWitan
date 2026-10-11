@@ -5,8 +5,8 @@
       <strong>{{ repository.dirtyCount }} files</strong>
     </div>
     <div class="repository-status-item">
-      <span>Last fetch</span>
-      <strong>{{ repository.lastFetch }}</strong>
+      <span>Current branch</span>
+      <strong>{{ repository.branch ?? 'Detached HEAD' }}</strong>
     </div>
     <div class="repository-status-item">
       <span>Commits</span>

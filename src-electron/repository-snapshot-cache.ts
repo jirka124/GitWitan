@@ -9,6 +9,8 @@ import type { GitRepositoryService } from './git-repository-service';
 import type { RepositoryRegistry } from './repository-registry';
 
 type CacheEntry = RepositorySnapshot & {
+  /** A full metadata read failed; keep it until another full read succeeds. */
+  metadataError: string | undefined;
   refreshPromise: Promise<void> | undefined;
   statusRefreshPromise: Promise<void> | undefined;
   refreshTimer: NodeJS.Timeout | undefined;
@@ -210,10 +212,12 @@ export class RepositorySnapshotCache {
         entry.updatedAt = new Date().toISOString();
         entry.statusUpdatedAt = Date.now();
         entry.metadataUpdatedAt = entry.statusUpdatedAt;
+        entry.metadataError = undefined;
         entry.error = undefined;
       } catch (error: unknown) {
         if (this.isCurrentEntry(entry, generation)) {
-          entry.error = error instanceof Error ? error.message : 'Unable to inspect repository.';
+          entry.metadataError =
+            error instanceof Error ? error.message : 'Unable to inspect repository.';
         }
       } finally {
         entry.refreshPromise = undefined;
@@ -317,6 +321,7 @@ export class RepositorySnapshotCache {
         existing.statusUpdatedAt = undefined;
         existing.metadataUpdatedAt = undefined;
         existing.error = undefined;
+        existing.metadataError = undefined;
       }
       existing.repository = repository;
       return existing;
@@ -328,6 +333,7 @@ export class RepositorySnapshotCache {
       overview: undefined,
       updatedAt: undefined,
       error: undefined,
+      metadataError: undefined,
       metadataWatchers: [],
       metadataWatchRetryTimer: undefined,
       metadataWatchStableTimer: undefined,
@@ -709,11 +715,15 @@ export class RepositorySnapshotCache {
       status: entry.status,
       overview: entry.overview,
       updatedAt: entry.updatedAt,
-      error: entry.error,
+      error: entry.metadataError ?? entry.error,
     };
   }
 
   private toRecord(entry: CacheEntry): RepositoryRecord {
-    return { repository: entry.repository, summary: entry.summary, error: entry.error };
+    return {
+      repository: entry.repository,
+      summary: entry.summary,
+      error: entry.metadataError ?? entry.error,
+    };
   }
 }

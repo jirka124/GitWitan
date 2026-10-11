@@ -2,25 +2,37 @@ import { defineStore } from 'pinia';
 import type { ManagedRepository } from '../components/repository/management/repository-management.types';
 import type { RepositoryRecord, RepositorySnapshot } from '../types/repository-data';
 
-const toManagedRepository = (record: RepositoryRecord): ManagedRepository => ({
-  key: record.repository.id,
-  name: record.repository.displayName,
-  path: record.repository.path,
-  icon: record.repository.icon,
-  dirtyCount: record.summary?.dirtyCount ?? 0,
-  lastFetch: record.summary ? 'Not fetched' : 'Unavailable',
-  commitCount: record.summary?.commitCount?.toString() ?? 'Unknown',
-  lastCommit: record.summary?.lastCommitAt
-    ? new Date(record.summary.lastCommitAt).toLocaleString()
-    : 'Unknown',
-  remotes: (record.summary?.remotes ?? []).map((remote) => ({
-    name: remote.name,
-    href: remote.url,
-    status: 'available',
-    tone: 'ok',
-    lastFetch: 'Not fetched',
-  })),
-});
+const toManagedRepository = (record: RepositoryRecord | RepositorySnapshot): ManagedRepository => {
+  const overview = 'overview' in record ? record.overview : undefined;
+  const status = 'status' in record ? record.status : undefined;
+  const updatedAt = 'updatedAt' in record ? record.updatedAt : undefined;
+
+  return {
+    key: record.repository.id,
+    name: record.repository.displayName,
+    path: record.repository.path,
+    icon: record.repository.icon,
+    dirtyCount: record.summary?.dirtyCount ?? 0,
+    branch: record.summary?.branch,
+    commitCount: record.summary?.commitCount?.toString() ?? 'Unknown',
+    lastCommit: record.summary?.lastCommitAt
+      ? new Date(record.summary.lastCommitAt).toLocaleString()
+      : 'Unknown',
+    remotes: (record.summary?.remotes ?? []).map((remote) => ({
+      name: remote.name,
+      href: remote.url,
+    })),
+    stagedChanges: status?.staged ?? [],
+    unstagedChanges: status?.unstaged ?? [],
+    branches: overview?.branches ?? [],
+    remoteBranches: overview?.remoteBranches ?? [],
+    stashes: overview?.stashes ?? [],
+    history: overview?.history ?? [],
+    hasOverview: overview !== undefined,
+    updatedAt,
+    error: record.error,
+  };
+};
 
 const createSnapshotVersions = (): Record<string, number> => ({});
 
@@ -72,7 +84,7 @@ export const useRepositoryManagementStore = defineStore('repositoryManagement', 
       }
     },
 
-    applyRecord(record: RepositoryRecord) {
+    applyRecord(record: RepositoryRecord | RepositorySnapshot) {
       const repository = toManagedRepository(record);
       const index = this.repositories.findIndex((item) => item.key === repository.key);
 
@@ -83,11 +95,7 @@ export const useRepositoryManagementStore = defineStore('repositoryManagement', 
     applySnapshot(snapshot: RepositorySnapshot) {
       this.snapshotVersion += 1;
       this.snapshotVersions[snapshot.repository.id] = this.snapshotVersion;
-      this.applyRecord({
-        repository: snapshot.repository,
-        summary: snapshot.summary,
-        error: snapshot.error,
-      });
+      this.applyRecord(snapshot);
     },
 
     async clone(repositoryUrl: string, parentFolder: string, folderName: string) {
@@ -161,7 +169,8 @@ export const useRepositoryManagementStore = defineStore('repositoryManagement', 
       if (!window.gitwitanRepositories) return;
 
       try {
-        this.applyRecord(await window.gitwitanRepositories.refresh(repositoryId));
+        const snapshot = await window.gitwitanRepositories.forceRefresh(repositoryId);
+        if (snapshot) this.applySnapshot(snapshot);
       } catch (error: unknown) {
         this.error = error instanceof Error ? error.message : 'Unable to refresh repository.';
       }
